@@ -1,8 +1,9 @@
 # Sky Blue EQ4
 
 Sky Blue EQ4 is maag-like tone shaping eq.  
-Internall sample rated fixed at 176.2/192kHz in ( 44.1/48, 88.1/96, 176.2/192 ) kHz Sample Rates.  
+Internal sample rated fixed at 176.2/192kHz in ( 44.1/48, 88.1/96, 176.2/192 ) kHz Sample Rates.  
 It does run under 44.1kHz, but may have some EQ curve cramping.  
+x4 oversampling has 24 sample latency, x2 oversampling has 12 sample latency.  
 
 <img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/de23d392-de72-4600-b86f-ef19e27cccc2"  width="600"/>  
 
@@ -40,6 +41,20 @@ One way to fix is adding high frequency contents, but it's not good at Phase Res
 The Other way, is by Oversampling it.  
 If we oversample internal IIR logic, it'll create Frequency Response at targeted Oversampled Frequency.  
 Then EQ Shapes will be fixed, and Phase Response as well.  
+
+<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/86d167b5-8038-41fe-b4a3-d66b1166faa6"  width="600"/>  
+
+Box tone, x4 Oversampling at 48kHz to 196kHz.  
+
+<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/e2284855-84f1-40a3-aa0f-a3d18decb353"  width="600"/>  
+
+Sky High Band +5.0 @ 40kHz, Frequency Response, x4 Oversampling at 48kHz to 196kHz.  
+
+<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/b1efedcb-13f6-4ba3-8e48-913f4c454e24"  width="600"/>  
+
+Sky High Band +5.0 @ 40kHz, Phase Response, x4 Oversampling at 48kHz to 196kHz.  
+
+Latency is 24 samples at x4 oversampling.  
 
 ### 2. Oversampling without 'Nonlinearity'  
 
