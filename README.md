@@ -96,6 +96,11 @@ These does not happen with original gear, for example Maag EQ4M at Sound on Soun
 
 So, I designed my EQ in strictly Parallel topology with no input signal blended in, and without getting gain increase schema.  
 
+### EQ algo  
+
+The EQ algorythm for Band-pass and High-pass filters is SVF sugested by Andy Cytomic.  
+Used his 'trapezoidal SVF in tangent and state space form'.  
+
 ## references
 
 1. Sound onSound - maag EQ4M  
@@ -110,5 +115,8 @@ So, I designed my EQ in strictly Parallel topology with no input signal blended 
 4. Nova-67P and parallel equalizers explained  
 <https://vladgsound.wordpress.com/2014/08/09/nova-67p-and-parallel-equalizers-explained/>  
 Dry mix is not used.
+
+5. Simultaneous solving of all outputs of Linear SVF using trapezoidal integration in state space form  
+<https://cytomic.com/files/dsp/SvfLinearTrapAllOutputs.pdf>
 
 ## Todo
