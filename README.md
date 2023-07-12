@@ -1,6 +1,10 @@
-# Sky_Blue_EQ4
+# Sky Blue EQ4
 
-Sky Blue EQ4 is maag-like tone shaping eq.
+Sky Blue EQ4 is maag-like tone shaping eq.  
+Internall sample rated fixed at 176.2/192kHz in ( 44.1/48, 88.1/96, 176.2/192 ) kHz Sample Rates.  
+It does run under 44.1kHz, but may have some EQ curve cramping.  
+
+<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/de23d392-de72-4600-b86f-ef19e27cccc2"  width="600"/>  
 
 Windows only(for now).  
 VST3.  
@@ -14,6 +18,9 @@ VST3.
 > * Note that you have to follow the Steinberg VST usage guidelines.  
 >  
 > <https://steinbergmedia.github.io/vst3_dev_portal/pages/FAQ/Licensing.html>  
+
+![120C7E3245DD5916ACD2E8E6AD51E8FD_snapshot](https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/142e3c12-cd5f-415d-9b72-8b4f04419633)
+
 
 VSTSDK 3.7.7 used  
 VSTGUI 4.12 used  
