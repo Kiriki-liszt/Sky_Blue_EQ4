@@ -1,0 +1,373 @@
+{
+	"vstgui-ui-description": {
+		"version": "1",
+		"bitmaps": {
+			"SB_background": {
+				"path": "SB_background.png"
+			},
+			"SB_knob_black": {
+				"path": "SB_knob_black.png"
+			},
+			"SB_knob_air": {
+				"path": "SB_knob_air.png"
+			},
+			"SB_knob_blue": {
+				"path": "SB_knob_blue.png"
+			},
+			"SB_knob_green": {
+				"path": "SB_knob_green.png"
+			},
+			"SB_knob_magenta": {
+				"path": "SB_knob_magenta.png"
+			},
+			"SB_knob_orange": {
+				"path": "SB_knob_orange.png"
+			},
+			"SB_knob_white": {
+				"path": "SB_knob_white.png"
+			},
+			"SB_knob_yellow": {
+				"path": "SB_knob_yellow.png"
+			},
+			"SB_bypass": {
+				"path": "SB_bypass.png"
+			}
+		},
+		"fonts": {
+			"Arial": {
+				"bold": "true",
+				"font-name": "Arial",
+				"size": "20"
+			}
+		},
+		"colors": {},
+		"gradients": {},
+		"control-tags": {
+			"Sub": "9",
+			"160": "7",
+			"2k5": "5",
+			"40": "8",
+			"650": "6",
+			"Sky": "4",
+			"SkyFreq": "3",
+			"Bypass": "0",
+			"InputAtten": "2",
+			"Zoom": "1"
+		},
+		"custom": {
+			"FocusDrawing": {},
+			"VST3Editor": {
+				"Path": "D:/0. Production/VST_Production/Generator/Sky Blue EQ4/resource/SBEQ4_editor.uidesc"
+			},
+			"UIGridController": {
+				"Grids": "1x 1,5x 5,10x 10,12x 12,15x 15",
+				"Size": "1, 1"
+			},
+			"UITemplateController": {
+				"SelectedTemplate": "view"
+			},
+			"UIEditController": {
+				"EditViewScale": "1",
+				"EditorSize": "0, 0, 1411, 607",
+				"SplitViewSize_0_0": "0.7762478485370051251024392513500060886145",
+				"SplitViewSize_0_1": "0.1893287435456110223697123728925362229347",
+				"SplitViewSize_1_0": "0.4819277108433734913006674105417914688587",
+				"SplitViewSize_1_1": "0.5094664371772805733229461111477576196194",
+				"SplitViewSize_2_0": "0.7760453579021969749973663965647574514151",
+				"SplitViewSize_2_1": "0.2204110559886605369417367228379589505494",
+				"TabSwitchValue": "0",
+				"Version": "1"
+			},
+			"UIAttributesController": {},
+			"UIViewCreatorDataSource": {
+				"SelectedRow": "14"
+			},
+			"UIBitmapsDataSource": {
+				"SelectedRow": "9"
+			},
+			"UIGradientsDataSource": {
+				"SelectedRow": "-1"
+			},
+			"UIFontsDataSource": {
+				"SelectedRow": "0"
+			}
+		},
+		"templates": {
+			"view": {
+				"attributes": {
+					"background-color": "~ BlackCColor",
+					"background-color-draw-style": "filled and stroked",
+					"class": "CViewContainer",
+					"mouse-enabled": "true",
+					"opacity": "1",
+					"origin": "0, 0",
+					"size": "1200, 300",
+					"transparent": "false",
+					"wants-focus": "false"
+				},
+				"children": {
+					"CView": {
+						"attributes": {
+							"bitmap": "SB_background",
+							"class": "CView",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "-1, -1",
+							"size": "1202, 302",
+							"transparent": "false",
+							"wants-focus": "false"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_black",
+							"class": "CAnimKnob",
+							"control-tag": "Sub",
+							"default-value": "10",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "107, 55",
+							"size": "90, 90",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_blue",
+							"class": "CAnimKnob",
+							"control-tag": "40",
+							"default-value": "10",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "241, 152",
+							"size": "90, 90",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_green",
+							"class": "CAnimKnob",
+							"control-tag": "160",
+							"default-value": "10",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "375, 55",
+							"size": "90, 90",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_magenta",
+							"class": "CAnimKnob",
+							"control-tag": "650",
+							"default-value": "10",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "508, 152",
+							"size": "90, 90",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_orange",
+							"class": "CAnimKnob",
+							"control-tag": "2k5",
+							"default-value": "10",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "641, 55",
+							"size": "90, 90",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_yellow",
+							"class": "CAnimKnob",
+							"control-tag": "Sky",
+							"default-value": "0",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "774, 152",
+							"size": "90, 90",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "90",
+							"angle-start": "-90",
+							"bitmap": "SB_knob_air",
+							"class": "CAnimKnob",
+							"control-tag": "SkyFreq",
+							"default-value": "0",
+							"height-of-one-image": "90",
+							"inverse-bitmap": "false",
+							"max-value": "6",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "916, 55",
+							"size": "90, 90",
+							"sub-pixmaps": "35",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"CAnimKnob": {
+						"attributes": {
+							"angle-range": "150",
+							"angle-start": "-150",
+							"bitmap": "SB_knob_white",
+							"class": "CAnimKnob",
+							"control-tag": "InputAtten",
+							"default-value": "20",
+							"height-of-one-image": "70",
+							"inverse-bitmap": "false",
+							"max-value": "20",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "1036, 172",
+							"size": "70, 70",
+							"sub-pixmaps": "105",
+							"transparent": "false",
+							"value-inset": "0",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1",
+							"zoom-factor": "1.5"
+						}
+					},
+					"COnOffButton": {
+						"attributes": {
+							"bitmap": "SB_bypass",
+							"class": "COnOffButton",
+							"control-tag": "Bypass",
+							"default-value": "0",
+							"max-value": "1",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "103, 170",
+							"size": "100, 100",
+							"transparent": "false",
+							"wants-focus": "false",
+							"wheel-inc-value": "0.1"
+						}
+					},
+					"COptionMenu": {
+						"attributes": {
+							"back-color": "~ BlackCColor",
+							"background-offset": "0, 0",
+							"class": "COptionMenu",
+							"control-tag": "Zoom",
+							"default-value": "0",
+							"font": "Arial",
+							"font-antialias": "true",
+							"font-color": "~ WhiteCColor",
+							"frame-color": "~ BlackCColor",
+							"frame-width": "1",
+							"max-value": "6",
+							"menu-check-style": "false",
+							"menu-popup-style": "false",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "114, 254",
+							"round-rect-radius": "6",
+							"shadow-color": "~ RedCColor",
+							"size": "60, 20",
+							"style-3D-in": "false",
+							"style-3D-out": "false",
+							"style-no-draw": "false",
+							"style-no-frame": "true",
+							"style-no-text": "false",
+							"style-round-rect": "false",
+							"style-shadow-text": "false",
+							"text-alignment": "center",
+							"text-inset": "0, 0",
+							"text-rotation": "0",
+							"text-shadow-offset": "1, 1",
+							"transparent": "true",
+							"value-precision": "2",
+							"wants-focus": "true",
+							"wheel-inc-value": "0.1"
+						}
+					}
+				}
+			}
+		}
+	}
+}
