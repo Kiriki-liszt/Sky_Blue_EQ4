@@ -67,13 +67,16 @@ We just need some nice curve that folds back and become flat again.
 Also the Low Pass FIR filter is only applied once.  
 No need for two because the EQ itself does not produce and harmonic content.  
 
+The filters has 49 taps for x2 oversampling with 12 sample latency, and 193 taps for x4 oversampling with 24 sample latency.  
+
+
 ### 3. Parallel EQ and Band-pass filters
 
 As I understand, the need of parallel EQ is for better resolution between two close EQ shape.  
 It'll interfere less than Serial EQs.  
 
 Also the original Maag EQs are using parallel EQ topology.  
-Maag EQ is consisted of four Band-pass and one High-pass for re-construct the feqquenct range, and one High-pass for adding 'Very High Frequency'.  
+Maag EQ is consisted of four Band-pass and one High-pass for re-constructing the Frequency range, and one High-pass for adding 'Very High Frequency'.  
 
 However, The Plugin-alliance version is not strictly Parallel topology.  
 We can check this out with comparing with any Serial EQs like Pro-Q 3.  
