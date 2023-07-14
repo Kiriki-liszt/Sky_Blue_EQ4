@@ -5,7 +5,7 @@ Internal sample rated fixed at 176.2/192kHz in 44.1/48kHz, 88.1/96kHz, 176.2/192
 It does run under 44.1kHz, but may have some EQ curve cramping.  
 At 44.1/48kHz - x4 oversampling is on with 24 sample latency, and at 88.1/96kHz - x2 oversampling is on with 12 sample latency.  
 
-<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/de23d392-de72-4600-b86f-ef19e27cccc2"  width="600"/>  
+<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/97e4e687-3212-4a64-8bfa-03322c38140b"  width="600"/>  
 
 Windows only(for now).  
 VST3.  
@@ -28,7 +28,8 @@ VSTGUI 4.12 used
 
 ## Version logs
 
-v1.0.0: intial try.  
+v0.0.1  : intial try.  
+v0.0.2  : GUI update.  
 
 ## What I've learned
 
