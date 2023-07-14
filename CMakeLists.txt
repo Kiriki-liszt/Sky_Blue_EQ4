@@ -42,6 +42,16 @@ if(SMTG_ADD_VSTGUI)
     smtg_target_add_plugin_resources(Sky_Blue_EQ4
         RESOURCES
             "resource/SBEQ4_editor.uidesc"
+            "resource/SB_background.png"
+            "resource/SB_bypass.png"
+            "resource/SB_knob_air.png"
+            "resource/SB_knob_black.png"
+            "resource/SB_knob_blue.png"
+            "resource/SB_knob_green.png"
+            "resource/SB_knob_magenta.png"
+            "resource/SB_knob_orange.png"
+            "resource/SB_knob_white.png"
+            "resource/SB_knob_yellow.png"
     )
 endif(SMTG_ADD_VSTGUI)
 # -------------------
