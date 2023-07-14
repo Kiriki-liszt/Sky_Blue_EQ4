@@ -7,7 +7,8 @@ At 44.1/48kHz - x4 oversampling is on with 24 sample latency, and at 88.1/96kHz 
 
 <img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/97e4e687-3212-4a64-8bfa-03322c38140b"  width="600"/>  
 
-Windows only(for now).  
+Windows and MacOS(Intel tested, Apple Silicon not tested).  
+I tried to Code Sign it, donn't know if it works.  
 VST3.  
 
 ## Licensing  
