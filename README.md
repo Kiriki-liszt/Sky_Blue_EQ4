@@ -5,11 +5,27 @@ Internal sample rated fixed at 176.2/192kHz in 44.1/48kHz, 88.1/96kHz, 176.2/192
 It does run under 44.1kHz, but may have some EQ curve cramping.  
 At 44.1/48kHz - x4 oversampling is on with 24 sample latency, and at 88.1/96kHz - x2 oversampling is on with 12 sample latency.  
 
+Windows and Mac, VST3.  
+
 <img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/97e4e687-3212-4a64-8bfa-03322c38140b"  width="600"/>  
 
-Windows and MacOS(Intel tested, Apple Silicon not tested).  
-I tried to Code Sign it, donn't know if it works.  
-VST3.  
+## How to use  
+
+1. Windows
+
+Unzip Win.zip from latest release and copy to "C:\Program Files\Common Files\VST3".  
+
+2. MacOS(Intel tested, Apple Silicon not tested).  
+
+Unzip MacOS.zip from latest release and copy to "/Library/Audio/Plug-Ins/VST3".  
+
+I Code Signed the package, hope this work as it is.  
+
+> If it doesn't go well, configure security options in console as  
+> ``` console  
+> sudo xattr -r -d com.apple.quarantine /Library/Audio/Plug-Ins/VST3/InflatorPackage.vst3  
+> ```  
+> tested by @jonasborneland [here](https://github.com/Kiriki-liszt/JS_Inflator_to_VST2_VST3/issues/12#issuecomment-1616671177)
 
 ## Licensing  
 
