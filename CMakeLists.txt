@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14.0)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "")
 
-set(vst3sdk_SOURCE_DIR "C:/VST_SDK/vst3sdk")
+set(vst3sdk_SOURCE_DIR "/Users/yoon/VST_SDK/vst3sdk")
 if(NOT vst3sdk_SOURCE_DIR)
     message(FATAL_ERROR "Path to VST3 SDK is empty!")
 endif()
@@ -48,8 +48,8 @@ endif(SMTG_ADD_VSTGUI)
 
 smtg_target_add_plugin_snapshots (Sky_Blue_EQ4
     RESOURCES
-        resource/120C7E3245DD5916ACD2E8E6AD51E8FD_snapshot.png
-        resource/120C7E3245DD5916ACD2E8E6AD51E8FD_snapshot_2.0x.png
+        resource/DEFABAA28A665F5E85CE33769A96179B_snapshot.png
+        resource/DEFABAA28A665F5E85CE33769A96179B_snapshot_2.0x.png
 )
 
 target_link_libraries(Sky_Blue_EQ4

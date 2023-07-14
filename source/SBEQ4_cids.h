@@ -11,8 +11,8 @@
 
 namespace yg331 {
 	//------------------------------------------------------------------------
-	static const Steinberg::FUID kSky_Blue_EQ4ProcessorUID(0x120C7E32, 0x45DD5916, 0xACD2E8E6, 0xAD51E8FD);
-	static const Steinberg::FUID kSky_Blue_EQ4ControllerUID(0x8C7DCFBF, 0x6D8356F0, 0x8CBC5CB2, 0x55C3D7E0);
+	static const Steinberg::FUID kSky_Blue_EQ4ProcessorUID (0xDEFABAA2, 0x8A665F5E, 0x85CE3376, 0x9A96179B);
+	static const Steinberg::FUID kSky_Blue_EQ4ControllerUID (0x3C9EE2F6, 0x5E085DBF, 0xA5664481, 0xFF226295);
 
 #define Sky_Blue_EQ4VST3Category "Fx"
 
