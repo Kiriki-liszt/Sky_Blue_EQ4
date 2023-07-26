@@ -1,9 +1,9 @@
 # Sky Blue EQ4
 
 Sky Blue EQ4 is maag-like tone shaping eq.  
-Internal sample rated fixed at 176.2/192kHz in 44.1/48kHz, 88.1/96kHz, 176.2/192kHz sample rates.  
+Internal sample rated fixed at 192/176.2kHz in 48/44.1kHz, 96/88.1kHz, 192/176.2kHz sample rates.  
 It does run under 44.1kHz, but may have some EQ curve cramping.  
-At 44.1/48kHz - x4 oversampling is on with 24 sample latency, and at 88.1/96kHz - x2 oversampling is on with 12 sample latency.  
+At 48/44.1kHz - x4 oversampling is on with 24 sample latency, and at 96/88.1kHz - x2 oversampling is on with 12 sample latency.  
 
 Windows and Mac, VST3.  
 
@@ -111,7 +111,7 @@ These does not happen with original gear, for example Maag EQ4M at Sound on Soun
 
 So, I designed my EQ in strictly Parallel topology with no input signal blended in, and without getting gain increase schema.  
 
-### EQ algo  
+### 5. EQ algo  
 
 The EQ algorythm for Band-pass and High-pass filters is SVF sugested by Andy Cytomic.  
 Used his 'trapezoidal SVF in tangent and state space form'.  
