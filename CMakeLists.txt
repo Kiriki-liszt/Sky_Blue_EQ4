@@ -1,7 +1,12 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.15.0)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "")
 
-set(vst3sdk_SOURCE_DIR "C:/VST_SDK/vst3sdk")
+if(SMTG_MAC)
+    set(vst3sdk_SOURCE_DIR "/Users/yoon/VST_SDK/vst3sdk")
+elseif(SMTG_WIN)
+    set(vst3sdk_SOURCE_DIR "C:/VST_SDK/vst3sdk")
+endif(SMTG_MAC)
+
 if(NOT vst3sdk_SOURCE_DIR)
     message(FATAL_ERROR "Path to VST3 SDK is empty!")
 endif()
@@ -42,6 +47,16 @@ if(SMTG_ADD_VSTGUI)
     smtg_target_add_plugin_resources(Sky_Blue_EQ4
         RESOURCES
             "resource/SBEQ4_editor.uidesc"
+            "resource/SB_background.png"
+            "resource/SB_bypass.png"
+            "resource/SB_knob_air.png"
+            "resource/SB_knob_black.png"
+            "resource/SB_knob_blue.png"
+            "resource/SB_knob_green.png"
+            "resource/SB_knob_magenta.png"
+            "resource/SB_knob_orange.png"
+            "resource/SB_knob_white.png"
+            "resource/SB_knob_yellow.png"
     )
 endif(SMTG_ADD_VSTGUI)
 # -------------------
@@ -81,3 +96,12 @@ elseif(SMTG_WIN)
         )
     endif()
 endif(SMTG_MAC)
+
+# Add an AUv2 target
+if (SMTG_MAC AND XCODE AND SMTG_COREAUDIO_SDK_PATH)
+	smtg_target_add_auv2(Sky_Blue_EQ4-au
+		BUNDLE_NAME Sky_Blue_EQ4
+		BUNDLE_IDENTIFIER io.githuib.yg331.SkyBlueEQ4.audiounit
+		INFO_PLIST_TEMPLATE resource/au-info.plist
+		VST3_PLUGIN_TARGET Sky_Blue_EQ4)
+endif(SMTG_MAC AND XCODE AND SMTG_COREAUDIO_SDK_PATH)
