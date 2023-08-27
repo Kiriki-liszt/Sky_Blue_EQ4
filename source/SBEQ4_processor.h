@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------------------
+//------------------------------------------------------------------------
 // Copyright(c) 2023 yg331.
 //------------------------------------------------------------------------
 
@@ -8,6 +8,8 @@
 #include "public.sdk/source/vst/vstaudioeffect.h"
 
 #include <cstdlib>
+#include <stdlib.h>
+#include <math.h>
 
 namespace yg331 {
 
@@ -75,9 +77,9 @@ namespace yg331 {
 		void FIR_dn_2_1(Steinberg::Vst::Sample64** inputs, Steinberg::Vst::Sample64** outputs, Steinberg::int32 numChannels, long sampleFrames);
 		void FIR_dn_4_1(Steinberg::Vst::Sample64** inputs, Steinberg::Vst::Sample64** outputs, Steinberg::int32 numChannels, long sampleFrames);
 
-		inline void Sky_Blue_EQ4Processor::coefSVF ( Steinberg::Vst::SampleRate Fs );
+		inline void coefSVF ( Steinberg::Vst::SampleRate Fs );
 
-		inline void Sky_Blue_EQ4Processor::setSVF
+		inline void setSVF
 		(
 			SVF_* svf_filter,
 			filter_type kFilter,
@@ -87,7 +89,7 @@ namespace yg331 {
 			Steinberg::Vst::Sample64 Fs
 		);
 
-		inline Steinberg::Vst::Sample64 Sky_Blue_EQ4Processor::computeSVF
+		inline Steinberg::Vst::Sample64 computeSVF
 		(
 			SVF_* svf_filter,
 			Steinberg::Vst::Sample64 input

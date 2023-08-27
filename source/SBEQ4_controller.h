@@ -63,52 +63,52 @@ namespace yg331 {
 		ZoomFactorVector zoomFactors;
 
 		Steinberg::tchar* Sky_freq[7] = {
-			STR16("off"), STR16("2.5k"),
-			STR16("5.0k"), STR16("10k"),
-			STR16("15k"), STR16("20k"),
-			STR16("40k")
+            (Steinberg::tchar*) STR16("off"), (Steinberg::tchar*) STR16("2.5k"),
+            (Steinberg::tchar*) STR16("5.0k"), (Steinberg::tchar*) STR16("10k"),
+            (Steinberg::tchar*) STR16("15k"), (Steinberg::tchar*) STR16("20k"),
+            (Steinberg::tchar*) STR16("40k")
 		};
 
 		Steinberg::tchar* Sky_band[knob_stepCount + 1] = {
-			STR16("0.0"), STR16("0.5"),
-			STR16("1.0"), STR16("1.5"),
-			STR16("2.0"), STR16("2.5"),
-			STR16("3.0"), STR16("3.5"),
-			STR16("4.0"), STR16("4.5"),
-			STR16("5.0"), STR16("5.5"),
-			STR16("6.0"), STR16("6.5"),
-			STR16("7.0"), STR16("7.5"),
-			STR16("8.0"), STR16("8.5"),
-			STR16("9.0"), STR16("9.5"),
-			STR16("10.0")
+            (Steinberg::tchar*) STR16("0.0"), (Steinberg::tchar*) STR16("0.5"),
+            (Steinberg::tchar*) STR16("1.0"), (Steinberg::tchar*) STR16("1.5"),
+            (Steinberg::tchar*) STR16("2.0"), (Steinberg::tchar*) STR16("2.5"),
+            (Steinberg::tchar*) STR16("3.0"), (Steinberg::tchar*) STR16("3.5"),
+            (Steinberg::tchar*) STR16("4.0"), (Steinberg::tchar*) STR16("4.5"),
+            (Steinberg::tchar*) STR16("5.0"), (Steinberg::tchar*) STR16("5.5"),
+            (Steinberg::tchar*) STR16("6.0"), (Steinberg::tchar*) STR16("6.5"),
+            (Steinberg::tchar*) STR16("7.0"), (Steinberg::tchar*) STR16("7.5"),
+            (Steinberg::tchar*) STR16("8.0"), (Steinberg::tchar*) STR16("8.5"),
+            (Steinberg::tchar*) STR16("9.0"), (Steinberg::tchar*) STR16("9.5"),
+            (Steinberg::tchar*) STR16("10.0")
 		};
 
 		Steinberg::tchar* Other_band[knob_stepCount + 1] = {
-			STR16("-5.0"), STR16("-4.5"),
-			STR16("-4.0"), STR16("-3.5"),
-			STR16("-3.0"), STR16("-2.5"),
-			STR16("-2.0"), STR16("-1.5"),
-			STR16("-1.0"), STR16("-0.5"),
-			STR16("0.0"), STR16("+0.5"),
-			STR16("+1.0"), STR16("+1.5"),
-			STR16("+2.0"), STR16("+2.5"),
-			STR16("+3.0"), STR16("+3.5"),
-			STR16("+4.0"), STR16("+4.5"),
-			STR16("+5.0")
+            (Steinberg::tchar*) STR16("-5.0"), (Steinberg::tchar*) STR16("-4.5"),
+            (Steinberg::tchar*) STR16("-4.0"), (Steinberg::tchar*) STR16("-3.5"),
+            (Steinberg::tchar*) STR16("-3.0"), (Steinberg::tchar*) STR16("-2.5"),
+            (Steinberg::tchar*) STR16("-2.0"), (Steinberg::tchar*) STR16("-1.5"),
+            (Steinberg::tchar*) STR16("-1.0"), (Steinberg::tchar*) STR16("-0.5"),
+            (Steinberg::tchar*) STR16("0.0"), (Steinberg::tchar*) STR16("+0.5"),
+            (Steinberg::tchar*) STR16("+1.0"), (Steinberg::tchar*) STR16("+1.5"),
+            (Steinberg::tchar*) STR16("+2.0"), (Steinberg::tchar*) STR16("+2.5"),
+            (Steinberg::tchar*) STR16("+3.0"), (Steinberg::tchar*) STR16("+3.5"),
+            (Steinberg::tchar*) STR16("+4.0"), (Steinberg::tchar*) STR16("+4.5"),
+            (Steinberg::tchar*) STR16("+5.0")
 		};
 
 		Steinberg::tchar* Atten_knob[knob_stepCount + 1] = {
-			STR16("-10.0"), STR16("-9.5"),
-			STR16("-9.0"), STR16("-8.5"),
-			STR16("-8.0"), STR16("-7.5"),
-			STR16("-7.0"), STR16("-6.5"),
-			STR16("-6.0"), STR16("-5.5"),
-			STR16("-5.0"), STR16("-4.5"),
-			STR16("-4.0"), STR16("-3.5"),
-			STR16("-3.0"), STR16("-2.5"),
-			STR16("-2.0"), STR16("-1.5"),
-			STR16("-1.0"), STR16("-0.5"),
-			STR16("0.0")
+            (Steinberg::tchar*) STR16("-10.0"), (Steinberg::tchar*) STR16("-9.5"),
+            (Steinberg::tchar*) STR16("-9.0"), (Steinberg::tchar*) STR16("-8.5"),
+            (Steinberg::tchar*) STR16("-8.0"), (Steinberg::tchar*) STR16("-7.5"),
+            (Steinberg::tchar*) STR16("-7.0"), (Steinberg::tchar*) STR16("-6.5"),
+            (Steinberg::tchar*) STR16("-6.0"), (Steinberg::tchar*) STR16("-5.5"),
+            (Steinberg::tchar*) STR16("-5.0"), (Steinberg::tchar*) STR16("-4.5"),
+            (Steinberg::tchar*) STR16("-4.0"), (Steinberg::tchar*) STR16("-3.5"),
+            (Steinberg::tchar*) STR16("-3.0"), (Steinberg::tchar*) STR16("-2.5"),
+            (Steinberg::tchar*) STR16("-2.0"), (Steinberg::tchar*) STR16("-1.5"),
+            (Steinberg::tchar*) STR16("-1.0"), (Steinberg::tchar*) STR16("-0.5"),
+            (Steinberg::tchar*) STR16("0.0")
 		};
 	};
 

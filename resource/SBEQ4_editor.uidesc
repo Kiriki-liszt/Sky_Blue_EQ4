@@ -57,7 +57,7 @@
 		"custom": {
 			"FocusDrawing": {},
 			"VST3Editor": {
-				"Path": "D:/0. Production/VST_Production/Generator/Sky Blue EQ4/resource/SBEQ4_editor.uidesc"
+				"Path": "/Users/yoon/Documents/VST_builds/xcode_14_3/Sky Blue EQ4/resource/SBEQ4_editor.uidesc"
 			},
 			"UIGridController": {
 				"Grids": "1x 1,5x 5,10x 10,12x 12,15x 15",
