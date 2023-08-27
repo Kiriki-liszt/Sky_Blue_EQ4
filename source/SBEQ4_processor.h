@@ -64,16 +64,16 @@ namespace yg331 {
 	protected:
 
 		template <typename SampleType>
-		void overSampling(SampleType** inputs, SampleType** outputs, Steinberg::Vst::SampleRate getSampleRate, Steinberg::int32 sampleFrames);
+		void overSampling(SampleType** inputs, SampleType** outputs, Steinberg::int32 numChannels, Steinberg::Vst::SampleRate getSampleRate, Steinberg::int32 sampleFrames);
 
 		template <typename SampleType>
-		void proc_out(Steinberg::Vst::Sample64** inputs, SampleType** outputs, Steinberg::int32 sampleFrames);
+		void proc_out(Steinberg::Vst::Sample64** inputs, SampleType** outputs, Steinberg::int32 numChannels, Steinberg::int32 sampleFrames);
 
 		template <typename SampleType>
-		void bypass_latency(SampleType** inputs, SampleType** outputs, Steinberg::int32 sampleFrames);
+		void bypass_latency(SampleType** inputs, SampleType** outputs, Steinberg::int32 numChannels, Steinberg::int32 sampleFrames);
 
-		void FIR_dn_2_1(Steinberg::Vst::Sample64** inputs, Steinberg::Vst::Sample64** outputs, long sampleFrames);
-		void FIR_dn_4_1(Steinberg::Vst::Sample64** inputs, Steinberg::Vst::Sample64** outputs, long sampleFrames);
+		void FIR_dn_2_1(Steinberg::Vst::Sample64** inputs, Steinberg::Vst::Sample64** outputs, Steinberg::int32 numChannels, long sampleFrames);
+		void FIR_dn_4_1(Steinberg::Vst::Sample64** inputs, Steinberg::Vst::Sample64** outputs, Steinberg::int32 numChannels, long sampleFrames);
 
 		inline void Sky_Blue_EQ4Processor::coefSVF ( Steinberg::Vst::SampleRate Fs );
 
@@ -98,6 +98,7 @@ namespace yg331 {
 		(
 			SampleType** inputs,
 			Steinberg::Vst::Sample64** outputs,
+			Steinberg::int32 numChannels,
 			Steinberg::Vst::SampleRate getSampleRate,
 			Steinberg::int32 sampleFrames
 		);

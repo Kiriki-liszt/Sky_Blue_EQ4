@@ -65,41 +65,89 @@ namespace yg331 {
 		out_2 = (Vst::Sample64**)malloc(sizeof(Vst::Sample64*) * 2);
 		if ((out_0 == NULL) || (out_1 == NULL) || (out_2 == NULL) ) return kResultFalse;
 
-		for (int c = 0; c < 2; c++) {
-			out_0[c] = (Vst::Sample64*)malloc(sizeof(Vst::Sample64) * maxSample);
-			out_1[c] = (Vst::Sample64*)malloc(sizeof(Vst::Sample64) * maxSample * 2);
-			out_2[c] = (Vst::Sample64*)malloc(sizeof(Vst::Sample64) * maxSample * 4);
-			if ((out_0[c] == NULL) || (out_1[c] == NULL) || (out_2[c] == NULL) ) return kResultFalse;
-			memset(out_0[c], 0, maxSample);
-			memset(out_1[c], 0, maxSample * 2);
-			memset(out_2[c], 0, maxSample * 4);
+		for (int channel = 0; channel < 2; channel++) {
+			out_0[channel] = (Vst::Sample64*)malloc(sizeof(Vst::Sample64) * maxSample);
+			out_1[channel] = (Vst::Sample64*)malloc(sizeof(Vst::Sample64) * maxSample * 2);
+			out_2[channel] = (Vst::Sample64*)malloc(sizeof(Vst::Sample64) * maxSample * 4);
+			if ((out_0[channel] == NULL) || (out_1[channel] == NULL) || (out_2[channel] == NULL) ) return kResultFalse;
+			memset(out_0[channel], 0, maxSample);
+			memset(out_1[channel], 0, maxSample * 2);
+			memset(out_2[channel], 0, maxSample * 4);
 		}
 
 		return kResultOk;
 	}
 
+	//------------------------------------------------------------------------
 	tresult PLUGIN_API Sky_Blue_EQ4Processor::setBusArrangements(
 		Vst::SpeakerArrangement* inputs, int32 numIns,
 		Vst::SpeakerArrangement* outputs, int32 numOuts)
 	{
-		// we only support one in and output bus and these busses must have the same number of channels
-		if (numIns == 1 &&
-			numOuts == 1 &&
-			Vst::SpeakerArr::getChannelCount(inputs[0]) == 2 &&
-			Vst::SpeakerArr::getChannelCount(outputs[0]) == 2
-			)	return AudioEffect::setBusArrangements(inputs, numIns, outputs, numOuts);
+		if (numIns == 1 && numOuts == 1)
+		{
+			// the host wants Mono => Mono (or 1 channel -> 1 channel)
+			if (Vst::SpeakerArr::getChannelCount(inputs[0]) == 1 &&
+				Vst::SpeakerArr::getChannelCount(outputs[0]) == 1)
+			{
+				auto* bus = FCast<Vst::AudioBus>(audioInputs.at(0));
+				if (bus)
+				{
+					// check if we are Mono => Mono, if not we need to recreate the busses
+					if (bus->getArrangement() != inputs[0])
+					{
+						getAudioInput(0)->setArrangement(inputs[0]);
+						getAudioInput(0)->setName(STR16("Mono In"));
+						getAudioOutput(0)->setArrangement(inputs[0]);
+						getAudioOutput(0)->setName(STR16("Mono Out"));
+					}
+					return kResultOk;
+				}
+			}
+			// the host wants something else than Mono => Mono,
+			// in this case we are always Stereo => Stereo
+			else
+			{
+				auto* bus = FCast<Vst::AudioBus>(audioInputs.at(0));
+				if (bus)
+				{
+					tresult result = kResultFalse;
 
+					// the host wants 2->2 (could be LsRs -> LsRs)
+					if (Vst::SpeakerArr::getChannelCount(inputs[0]) == 2 &&
+						Vst::SpeakerArr::getChannelCount(outputs[0]) == 2)
+					{
+						getAudioInput(0)->setArrangement(inputs[0]);
+						getAudioInput(0)->setName(STR16("Stereo In"));
+						getAudioOutput(0)->setArrangement(outputs[0]);
+						getAudioOutput(0)->setName(STR16("Stereo Out"));
+						result = kResultTrue;
+					}
+					// the host want something different than 1->1 or 2->2 : in this case we want stereo
+					else if (bus->getArrangement() != Vst::SpeakerArr::kStereo)
+					{
+						getAudioInput(0)->setArrangement(Vst::SpeakerArr::kStereo);
+						getAudioInput(0)->setName(STR16("Stereo In"));
+						getAudioOutput(0)->setArrangement(Vst::SpeakerArr::kStereo);
+						getAudioOutput(0)->setName(STR16("Stereo Out"));
+						result = kResultFalse;
+					}
+
+					return result;
+				}
+			}
+		}
 		return kResultFalse;
 	}
+
 
 	//------------------------------------------------------------------------
 	tresult PLUGIN_API Sky_Blue_EQ4Processor::terminate()
 	{
 		// Here the Plug-in will be de-instantiated, last possibility to remove some memory!
-		for (int c = 0; c < 2; c++) {
-			free(out_0[c]);
-			free(out_1[c]);
-			free(out_2[c]);
+		for (int channel = 0; channel < 2; channel++) {
+			free(out_0[channel]);
+			free(out_1[channel]);
+			free(out_2[channel]);
 		}
 		free(out_0);
 		free(out_1);
@@ -176,6 +224,10 @@ namespace yg331 {
 			return kResultOk;
 		}
 
+		// (simplification) we suppose in this example that we have the same input channel count than
+		// the output
+		int32 numChannels = data.inputs[0].numChannels;
+
 		//---get audio buffers----------------
 		uint32 sampleFramesSize = getSampleFramesSizeInBytes(processSetup, data.numSamples);
 		void** in = getChannelBuffersPointer(processSetup, data.inputs[0]);
@@ -211,10 +263,10 @@ namespace yg331 {
 		// handled with latency
 
 		if (data.symbolicSampleSize == Vst::kSample32) {
-			overSampling<Vst::Sample32>((Vst::Sample32**)in, (Vst::Sample32**)out, getSampleRate, data.numSamples);
+			overSampling<Vst::Sample32>((Vst::Sample32**)in, (Vst::Sample32**)out, numChannels, getSampleRate, data.numSamples);
 		}
 		else {
-			overSampling<Vst::Sample64>((Vst::Sample64**)in, (Vst::Sample64**)out, getSampleRate, data.numSamples);
+			overSampling<Vst::Sample64>((Vst::Sample64**)in, (Vst::Sample64**)out, numChannels, getSampleRate, data.numSamples);
 		}
 
 		return kResultOk;
@@ -230,14 +282,14 @@ namespace yg331 {
 	tresult PLUGIN_API Sky_Blue_EQ4Processor::setupProcessing(Vst::ProcessSetup& newSetup)
 	{
 		if (maxSample < newSetup.maxSamplesPerBlock) {
-			for (int c = 0; c < 2; c++) {
-				out_0[c] = (Vst::Sample64*)realloc(out_0[c], sizeof(Vst::Sample64) * newSetup.maxSamplesPerBlock);
-				out_1[c] = (Vst::Sample64*)realloc(out_1[c], sizeof(Vst::Sample64) * newSetup.maxSamplesPerBlock * 2);
-				out_2[c] = (Vst::Sample64*)realloc(out_2[c], sizeof(Vst::Sample64) * newSetup.maxSamplesPerBlock * 4);
-				if ((out_0[c] == NULL) || (out_1[c] == NULL) || (out_2[c] == NULL) ) return kResultFalse;
-				memset(out_0[c], 0, newSetup.maxSamplesPerBlock);
-				memset(out_1[c], 0, newSetup.maxSamplesPerBlock * 2);
-				memset(out_2[c], 0, newSetup.maxSamplesPerBlock * 4);
+			for (int channel = 0; channel < 2; channel++) {
+				out_0[channel] = (Vst::Sample64*)realloc(out_0[channel], sizeof(Vst::Sample64) * newSetup.maxSamplesPerBlock);
+				out_1[channel] = (Vst::Sample64*)realloc(out_1[channel], sizeof(Vst::Sample64) * newSetup.maxSamplesPerBlock * 2);
+				out_2[channel] = (Vst::Sample64*)realloc(out_2[channel], sizeof(Vst::Sample64) * newSetup.maxSamplesPerBlock * 4);
+				if ((out_0[channel] == NULL) || (out_1[channel] == NULL) || (out_2[channel] == NULL) ) return kResultFalse;
+				memset(out_0[channel], 0, newSetup.maxSamplesPerBlock);
+				memset(out_1[channel], 0, newSetup.maxSamplesPerBlock * 2);
+				memset(out_2[channel], 0, newSetup.maxSamplesPerBlock * 4);
 			}
 		}
 
@@ -485,13 +537,13 @@ namespace yg331 {
 
 
 	template <typename SampleType>
-	void Sky_Blue_EQ4Processor::processSVF(SampleType** inputs, Vst::Sample64** outputs, Steinberg::Vst::SampleRate getSampleRate, Steinberg::int32 sampleFrames)
+	void Sky_Blue_EQ4Processor::processSVF(
+		SampleType**     inputs, 
+		Vst::Sample64**  outputs, 
+		Steinberg::int32 numChannels,
+		Steinberg::Vst::SampleRate getSampleRate, 
+		Steinberg::int32 sampleFrames)
 	{
-
-		SampleType* In_L = (SampleType*)inputs[0];
-		SampleType* In_R = (SampleType*)inputs[1];
-		Vst::Sample64* Out_L = (Vst::Sample64*)outputs[0];
-		Vst::Sample64* Out_R = (Vst::Sample64*)outputs[1];
 
 		Vst::Sample64 _db = (12.0 * fParamInputAtten - 12.0) - (3.0);
 
@@ -500,14 +552,14 @@ namespace yg331 {
 		coefSVF(getSampleRate);
 
 		int32 nParam_Sub = FromNormalized<Vst::ParamValue>(fParamSub, knob_stepCount);
-		int32 nParam_40 = FromNormalized<Vst::ParamValue>(fParam40, knob_stepCount);
+		int32 nParam_40  = FromNormalized<Vst::ParamValue>(fParam40,  knob_stepCount);
 		int32 nParam_160 = FromNormalized<Vst::ParamValue>(fParam160, knob_stepCount);
 		int32 nParam_650 = FromNormalized<Vst::ParamValue>(fParam650, knob_stepCount);
 		int32 nParam_2k5 = FromNormalized<Vst::ParamValue>(fParam2k5, knob_stepCount);
 		int32 nParam_Sky = FromNormalized<Vst::ParamValue>(fParamSky, knob_stepCount);
 
 		BP_gain_Sub = BP_arr[nParam_Sub];
-		BP_gain_40 = BP_arr[nParam_40];
+		BP_gain_40  = BP_arr[nParam_40];
 		BP_gain_160 = BP_arr[nParam_160];
 		BP_gain_650 = BP_arr[nParam_650];
 		HP_gain_2k5 = HP_arr[nParam_2k5];
@@ -519,186 +571,119 @@ namespace yg331 {
 		else if (fParamOS == overSample_2x) loop = 2;
 		else loop = 4;
 
-		while (--sampleFrames >= 0)
+		for (int32 channel = 0; channel < numChannels; channel++)
 		{
-			Vst::Sample64 inputSampleL = *In_L;
-			Vst::Sample64 inputSampleR = *In_R;
-			In_L++;
-			In_R++;
+			int32 samples = sampleFrames;
+			SampleType* ptrIn  = (SampleType*)inputs[channel];
+			Vst::Sample64* ptrOut = (Vst::Sample64*)outputs[channel];
 
-			inputSampleL *= In_Atten;
-			inputSampleR *= In_Atten;
-
-			for (int i = 0; i < loop; i++)
+			while (--samples >= 0)
 			{
-				if (i > 0) {
-					inputSampleL = 0.0;
-					inputSampleR = 0.0;
+				Vst::Sample64 inputSample = *ptrIn;
+				ptrIn++;
+
+				inputSample *= In_Atten;
+
+				for (int i = 0; i < loop; i++)
+				{
+					if (i > 0) {
+						inputSample = 0.0;
+					}
+
+					//inputSample = computeSVF(&svf_LC[channel], inputSample);
+
+					svf_Sub[channel].vin = inputSample;
+					svf_Sub[channel].t0 = svf_Sub[channel].vin - svf_Sub[channel].ic2eq;
+					svf_Sub[channel].v0 = svf_Sub[channel].gt0 * svf_Sub[channel].t0 - svf_Sub[channel].gk0 * svf_Sub[channel].ic1eq;
+					svf_Sub[channel].t1 = svf_Sub[channel].gt1 * svf_Sub[channel].t0 - svf_Sub[channel].gk1 * svf_Sub[channel].ic1eq;
+					svf_Sub[channel].t2 = svf_Sub[channel].gt2 * svf_Sub[channel].t0 + svf_Sub[channel].gt1 * svf_Sub[channel].ic1eq;
+					svf_Sub[channel].v1 = svf_Sub[channel].t1 + svf_Sub[channel].ic1eq;
+					svf_Sub[channel].v2 = svf_Sub[channel].t2 + svf_Sub[channel].ic2eq;
+					svf_Sub[channel].ic1eq += 2.0 * svf_Sub[channel].t1;
+					svf_Sub[channel].ic2eq += 2.0 * svf_Sub[channel].t2;
+					Vst::Sample64 tmp_sub = svf_Sub[channel].m0 * svf_Sub[channel].v0 
+					                      + svf_Sub[channel].m1 * svf_Sub[channel].v1 
+					                      + svf_Sub[channel].m2 * svf_Sub[channel].v2;
+
+					svf_40[channel].vin = inputSample;
+					svf_40[channel].t0 = svf_40[channel].vin - svf_40[channel].ic2eq;
+					svf_40[channel].v0 = svf_40[channel].gt0 * svf_40[channel].t0 - svf_40[channel].gk0 * svf_40[channel].ic1eq;
+					svf_40[channel].t1 = svf_40[channel].gt1 * svf_40[channel].t0 - svf_40[channel].gk1 * svf_40[channel].ic1eq;
+					svf_40[channel].t2 = svf_40[channel].gt2 * svf_40[channel].t0 + svf_40[channel].gt1 * svf_40[channel].ic1eq;
+					svf_40[channel].v1 = svf_40[channel].t1 + svf_40[channel].ic1eq;
+					svf_40[channel].v2 = svf_40[channel].t2 + svf_40[channel].ic2eq;
+					svf_40[channel].ic1eq += 2.0 * svf_40[channel].t1;
+					svf_40[channel].ic2eq += 2.0 * svf_40[channel].t2;
+					Vst::Sample64 tmp_40 = svf_40[channel].m0 * svf_40[channel].v0 
+					                     + svf_40[channel].m1 * svf_40[channel].v1 
+					                     + svf_40[channel].m2 * svf_40[channel].v2;
+
+					svf_160[channel].vin = inputSample;
+					svf_160[channel].t0 = svf_160[channel].vin - svf_160[channel].ic2eq;
+					svf_160[channel].v0 = svf_160[channel].gt0 * svf_160[channel].t0 - svf_160[channel].gk0 * svf_160[channel].ic1eq;
+					svf_160[channel].t1 = svf_160[channel].gt1 * svf_160[channel].t0 - svf_160[channel].gk1 * svf_160[channel].ic1eq;
+					svf_160[channel].t2 = svf_160[channel].gt2 * svf_160[channel].t0 + svf_160[channel].gt1 * svf_160[channel].ic1eq;
+					svf_160[channel].v1 = svf_160[channel].t1 + svf_160[channel].ic1eq;
+					svf_160[channel].v2 = svf_160[channel].t2 + svf_160[channel].ic2eq;
+					svf_160[channel].ic1eq += 2.0 * svf_160[channel].t1;
+					svf_160[channel].ic2eq += 2.0 * svf_160[channel].t2;
+					Vst::Sample64 tmp_160 = svf_160[channel].m0 * svf_160[channel].v0 
+					                      + svf_160[channel].m1 * svf_160[channel].v1 
+					                      + svf_160[channel].m2 * svf_160[channel].v2;
+
+					svf_650[channel].vin = inputSample;
+					svf_650[channel].t0 = svf_650[channel].vin - svf_650[channel].ic2eq;
+					svf_650[channel].v0 = svf_650[channel].gt0 * svf_650[channel].t0 - svf_650[channel].gk0 * svf_650[channel].ic1eq;
+					svf_650[channel].t1 = svf_650[channel].gt1 * svf_650[channel].t0 - svf_650[channel].gk1 * svf_650[channel].ic1eq;
+					svf_650[channel].t2 = svf_650[channel].gt2 * svf_650[channel].t0 + svf_650[channel].gt1 * svf_650[channel].ic1eq;
+					svf_650[channel].v1 = svf_650[channel].t1 + svf_650[channel].ic1eq;
+					svf_650[channel].v2 = svf_650[channel].t2 + svf_650[channel].ic2eq;
+					svf_650[channel].ic1eq += 2.0 * svf_650[channel].t1;
+					svf_650[channel].ic2eq += 2.0 * svf_650[channel].t2;
+					Vst::Sample64 tmp_650 = svf_650[channel].m0 * svf_650[channel].v0 
+					                      + svf_650[channel].m1 * svf_650[channel].v1 
+					                      + svf_650[channel].m2 * svf_650[channel].v2;
+
+					svf_2k5[channel].vin = inputSample;
+					svf_2k5[channel].t0 = svf_2k5[channel].vin - svf_2k5[channel].ic2eq;
+					svf_2k5[channel].v0 = svf_2k5[channel].gt0 * svf_2k5[channel].t0 - svf_2k5[channel].gk0 * svf_2k5[channel].ic1eq;
+					svf_2k5[channel].t1 = svf_2k5[channel].gt1 * svf_2k5[channel].t0 - svf_2k5[channel].gk1 * svf_2k5[channel].ic1eq;
+					svf_2k5[channel].t2 = svf_2k5[channel].gt2 * svf_2k5[channel].t0 + svf_2k5[channel].gt1 * svf_2k5[channel].ic1eq;
+					svf_2k5[channel].v1 = svf_2k5[channel].t1 + svf_2k5[channel].ic1eq;
+					svf_2k5[channel].v2 = svf_2k5[channel].t2 + svf_2k5[channel].ic2eq;
+					svf_2k5[channel].ic1eq += 2.0 * svf_2k5[channel].t1;
+					svf_2k5[channel].ic2eq += 2.0 * svf_2k5[channel].t2;
+					Vst::Sample64 tmp_2k5 = svf_2k5[channel].m0 * svf_2k5[channel].v0 
+					                      + svf_2k5[channel].m1 * svf_2k5[channel].v1 
+					                      + svf_2k5[channel].m2 * svf_2k5[channel].v2;
+
+					svf_Sky[channel].vin = inputSample;
+					svf_Sky[channel].t0 = svf_Sky[channel].vin - svf_Sky[channel].ic2eq;
+					svf_Sky[channel].v0 = svf_Sky[channel].gt0 * svf_Sky[channel].t0 - svf_Sky[channel].gk0 * svf_Sky[channel].ic1eq;
+					svf_Sky[channel].t1 = svf_Sky[channel].gt1 * svf_Sky[channel].t0 - svf_Sky[channel].gk1 * svf_Sky[channel].ic1eq;
+					svf_Sky[channel].t2 = svf_Sky[channel].gt2 * svf_Sky[channel].t0 + svf_Sky[channel].gt1 * svf_Sky[channel].ic1eq;
+					svf_Sky[channel].v1 = svf_Sky[channel].t1 + svf_Sky[channel].ic1eq;
+					svf_Sky[channel].v2 = svf_Sky[channel].t2 + svf_Sky[channel].ic2eq;
+					svf_Sky[channel].ic1eq += 2.0 * svf_Sky[channel].t1;
+					svf_Sky[channel].ic2eq += 2.0 * svf_Sky[channel].t2;
+					Vst::Sample64 tmp_sky = svf_Sky[channel].m0 * svf_Sky[channel].v0 
+					                      + svf_Sky[channel].m1 * svf_Sky[channel].v1 
+					                      + svf_Sky[channel].m2 * svf_Sky[channel].v2;
+
+					Vst::Sample64 dataOut = 0.0;
+					dataOut += tmp_sub * BP_gain_Sub;
+					dataOut += tmp_40  * BP_gain_40;
+					dataOut += tmp_160 * BP_gain_160;
+					dataOut += tmp_650 * BP_gain_650;
+					dataOut += tmp_2k5 * HP_gain_2k5;
+					dataOut += tmp_sky * HP_gain_Sky;
+
+					inputSample = dataOut; // * gain;
+
+					*ptrOut = inputSample;
+
+					ptrOut++;
 				}
-
-				//inputSampleL = computeSVF(&svf_LC[0], inputSampleL);
-				//inputSampleR = computeSVF(&svf_LC[1], inputSampleR);
-
-				Vst::Sample64 dataOutL = 0.0;
-				Vst::Sample64 dataOutR = 0.0;
-
-				svf_Sub[0].vin = inputSampleL;
-				svf_Sub[0].t0 = svf_Sub[0].vin - svf_Sub[0].ic2eq;
-				svf_Sub[0].v0 = svf_Sub[0].gt0 * svf_Sub[0].t0 - svf_Sub[0].gk0 * svf_Sub[0].ic1eq;
-				svf_Sub[0].t1 = svf_Sub[0].gt1 * svf_Sub[0].t0 - svf_Sub[0].gk1 * svf_Sub[0].ic1eq;
-				svf_Sub[0].t2 = svf_Sub[0].gt2 * svf_Sub[0].t0 + svf_Sub[0].gt1 * svf_Sub[0].ic1eq;
-				svf_Sub[0].v1 = svf_Sub[0].t1 + svf_Sub[0].ic1eq;
-				svf_Sub[0].v2 = svf_Sub[0].t2 + svf_Sub[0].ic2eq;
-				svf_Sub[0].ic1eq += 2.0 * svf_Sub[0].t1;
-				svf_Sub[0].ic2eq += 2.0 * svf_Sub[0].t2;
-				Vst::Sample64 tmp_sub_L = svf_Sub[0].m0 * svf_Sub[0].v0 + svf_Sub[0].m1 * svf_Sub[0].v1 + svf_Sub[0].m2 * svf_Sub[0].v2;
-
-				svf_40[0].vin = inputSampleL;
-				svf_40[0].t0 = svf_40[0].vin - svf_40[0].ic2eq;
-				svf_40[0].v0 = svf_40[0].gt0 * svf_40[0].t0 - svf_40[0].gk0 * svf_40[0].ic1eq;
-				svf_40[0].t1 = svf_40[0].gt1 * svf_40[0].t0 - svf_40[0].gk1 * svf_40[0].ic1eq;
-				svf_40[0].t2 = svf_40[0].gt2 * svf_40[0].t0 + svf_40[0].gt1 * svf_40[0].ic1eq;
-				svf_40[0].v1 = svf_40[0].t1 + svf_40[0].ic1eq;
-				svf_40[0].v2 = svf_40[0].t2 + svf_40[0].ic2eq;
-				svf_40[0].ic1eq += 2.0 * svf_40[0].t1;
-				svf_40[0].ic2eq += 2.0 * svf_40[0].t2;
-				Vst::Sample64 tmp_40_L = svf_40[0].m0 * svf_40[0].v0 + svf_40[0].m1 * svf_40[0].v1 + svf_40[0].m2 * svf_40[0].v2;
-
-				svf_160[0].vin = inputSampleL;
-				svf_160[0].t0 = svf_160[0].vin - svf_160[0].ic2eq;
-				svf_160[0].v0 = svf_160[0].gt0 * svf_160[0].t0 - svf_160[0].gk0 * svf_160[0].ic1eq;
-				svf_160[0].t1 = svf_160[0].gt1 * svf_160[0].t0 - svf_160[0].gk1 * svf_160[0].ic1eq;
-				svf_160[0].t2 = svf_160[0].gt2 * svf_160[0].t0 + svf_160[0].gt1 * svf_160[0].ic1eq;
-				svf_160[0].v1 = svf_160[0].t1 + svf_160[0].ic1eq;
-				svf_160[0].v2 = svf_160[0].t2 + svf_160[0].ic2eq;
-				svf_160[0].ic1eq += 2.0 * svf_160[0].t1;
-				svf_160[0].ic2eq += 2.0 * svf_160[0].t2;
-				Vst::Sample64 tmp_160_L = svf_160[0].m0 * svf_160[0].v0 + svf_160[0].m1 * svf_160[0].v1 + svf_160[0].m2 * svf_160[0].v2;
-
-				svf_650[0].vin = inputSampleL;
-				svf_650[0].t0 = svf_650[0].vin - svf_650[0].ic2eq;
-				svf_650[0].v0 = svf_650[0].gt0 * svf_650[0].t0 - svf_650[0].gk0 * svf_650[0].ic1eq;
-				svf_650[0].t1 = svf_650[0].gt1 * svf_650[0].t0 - svf_650[0].gk1 * svf_650[0].ic1eq;
-				svf_650[0].t2 = svf_650[0].gt2 * svf_650[0].t0 + svf_650[0].gt1 * svf_650[0].ic1eq;
-				svf_650[0].v1 = svf_650[0].t1 + svf_650[0].ic1eq;
-				svf_650[0].v2 = svf_650[0].t2 + svf_650[0].ic2eq;
-				svf_650[0].ic1eq += 2.0 * svf_650[0].t1;
-				svf_650[0].ic2eq += 2.0 * svf_650[0].t2;
-				Vst::Sample64 tmp_650_L = svf_650[0].m0 * svf_650[0].v0 + svf_650[0].m1 * svf_650[0].v1 + svf_650[0].m2 * svf_650[0].v2;
-
-				svf_2k5[0].vin = inputSampleL;
-				svf_2k5[0].t0 = svf_2k5[0].vin - svf_2k5[0].ic2eq;
-				svf_2k5[0].v0 = svf_2k5[0].gt0 * svf_2k5[0].t0 - svf_2k5[0].gk0 * svf_2k5[0].ic1eq;
-				svf_2k5[0].t1 = svf_2k5[0].gt1 * svf_2k5[0].t0 - svf_2k5[0].gk1 * svf_2k5[0].ic1eq;
-				svf_2k5[0].t2 = svf_2k5[0].gt2 * svf_2k5[0].t0 + svf_2k5[0].gt1 * svf_2k5[0].ic1eq;
-				svf_2k5[0].v1 = svf_2k5[0].t1 + svf_2k5[0].ic1eq;
-				svf_2k5[0].v2 = svf_2k5[0].t2 + svf_2k5[0].ic2eq;
-				svf_2k5[0].ic1eq += 2.0 * svf_2k5[0].t1;
-				svf_2k5[0].ic2eq += 2.0 * svf_2k5[0].t2;
-				Vst::Sample64 tmp_2k5_L = svf_2k5[0].m0 * svf_2k5[0].v0 + svf_2k5[0].m1 * svf_2k5[0].v1 + svf_2k5[0].m2 * svf_2k5[0].v2;
-
-				svf_Sky[0].vin = inputSampleL;
-				svf_Sky[0].t0 = svf_Sky[0].vin - svf_Sky[0].ic2eq;
-				svf_Sky[0].v0 = svf_Sky[0].gt0 * svf_Sky[0].t0 - svf_Sky[0].gk0 * svf_Sky[0].ic1eq;
-				svf_Sky[0].t1 = svf_Sky[0].gt1 * svf_Sky[0].t0 - svf_Sky[0].gk1 * svf_Sky[0].ic1eq;
-				svf_Sky[0].t2 = svf_Sky[0].gt2 * svf_Sky[0].t0 + svf_Sky[0].gt1 * svf_Sky[0].ic1eq;
-				svf_Sky[0].v1 = svf_Sky[0].t1 + svf_Sky[0].ic1eq;
-				svf_Sky[0].v2 = svf_Sky[0].t2 + svf_Sky[0].ic2eq;
-				svf_Sky[0].ic1eq += 2.0 * svf_Sky[0].t1;
-				svf_Sky[0].ic2eq += 2.0 * svf_Sky[0].t2;
-				Vst::Sample64 tmp_sky_L = svf_Sky[0].m0 * svf_Sky[0].v0 + svf_Sky[0].m1 * svf_Sky[0].v1 + svf_Sky[0].m2 * svf_Sky[0].v2;
-
-
-
-				svf_Sub[1].vin = inputSampleR;
-				svf_Sub[1].t0 = svf_Sub[1].vin - svf_Sub[1].ic2eq;
-				svf_Sub[1].v0 = svf_Sub[1].gt0 * svf_Sub[1].t0 - svf_Sub[1].gk0 * svf_Sub[1].ic1eq;
-				svf_Sub[1].t1 = svf_Sub[1].gt1 * svf_Sub[1].t0 - svf_Sub[1].gk1 * svf_Sub[1].ic1eq;
-				svf_Sub[1].t2 = svf_Sub[1].gt2 * svf_Sub[1].t0 + svf_Sub[1].gt1 * svf_Sub[1].ic1eq;
-				svf_Sub[1].v1 = svf_Sub[1].t1 + svf_Sub[1].ic1eq;
-				svf_Sub[1].v2 = svf_Sub[1].t2 + svf_Sub[1].ic2eq;
-				svf_Sub[1].ic1eq += 2.0 * svf_Sub[1].t1;
-				svf_Sub[1].ic2eq += 2.0 * svf_Sub[1].t2;
-				Vst::Sample64 tmp_sub_R = svf_Sub[1].m0 * svf_Sub[1].v0 + svf_Sub[1].m1 * svf_Sub[1].v1 + svf_Sub[1].m2 * svf_Sub[1].v2;
-
-				svf_40[1].vin = inputSampleR;
-				svf_40[1].t0 = svf_40[1].vin - svf_40[1].ic2eq;
-				svf_40[1].v0 = svf_40[1].gt0 * svf_40[1].t0 - svf_40[1].gk0 * svf_40[1].ic1eq;
-				svf_40[1].t1 = svf_40[1].gt1 * svf_40[1].t0 - svf_40[1].gk1 * svf_40[1].ic1eq;
-				svf_40[1].t2 = svf_40[1].gt2 * svf_40[1].t0 + svf_40[1].gt1 * svf_40[1].ic1eq;
-				svf_40[1].v1 = svf_40[1].t1 + svf_40[1].ic1eq;
-				svf_40[1].v2 = svf_40[1].t2 + svf_40[1].ic2eq;
-				svf_40[1].ic1eq += 2.0 * svf_40[1].t1;
-				svf_40[1].ic2eq += 2.0 * svf_40[1].t2;
-				Vst::Sample64 tmp_40_R = svf_40[1].m0 * svf_40[1].v0 + svf_40[1].m1 * svf_40[1].v1 + svf_40[1].m2 * svf_40[1].v2;
-
-				svf_160[1].vin = inputSampleR;
-				svf_160[1].t0 = svf_160[1].vin - svf_160[1].ic2eq;
-				svf_160[1].v0 = svf_160[1].gt0 * svf_160[1].t0 - svf_160[1].gk0 * svf_160[1].ic1eq;
-				svf_160[1].t1 = svf_160[1].gt1 * svf_160[1].t0 - svf_160[1].gk1 * svf_160[1].ic1eq;
-				svf_160[1].t2 = svf_160[1].gt2 * svf_160[1].t0 + svf_160[1].gt1 * svf_160[1].ic1eq;
-				svf_160[1].v1 = svf_160[1].t1 + svf_160[1].ic1eq;
-				svf_160[1].v2 = svf_160[1].t2 + svf_160[1].ic2eq;
-				svf_160[1].ic1eq += 2.0 * svf_160[1].t1;
-				svf_160[1].ic2eq += 2.0 * svf_160[1].t2;
-				Vst::Sample64 tmp_160_R = svf_160[1].m0 * svf_160[1].v0 + svf_160[1].m1 * svf_160[1].v1 + svf_160[1].m2 * svf_160[1].v2;
-
-				svf_650[1].vin = inputSampleR;
-				svf_650[1].t0 = svf_650[1].vin - svf_650[1].ic2eq;
-				svf_650[1].v0 = svf_650[1].gt0 * svf_650[1].t0 - svf_650[1].gk0 * svf_650[1].ic1eq;
-				svf_650[1].t1 = svf_650[1].gt1 * svf_650[1].t0 - svf_650[1].gk1 * svf_650[1].ic1eq;
-				svf_650[1].t2 = svf_650[1].gt2 * svf_650[1].t0 + svf_650[1].gt1 * svf_650[1].ic1eq;
-				svf_650[1].v1 = svf_650[1].t1 + svf_650[1].ic1eq;
-				svf_650[1].v2 = svf_650[1].t2 + svf_650[1].ic2eq;
-				svf_650[1].ic1eq += 2.0 * svf_650[1].t1;
-				svf_650[1].ic2eq += 2.0 * svf_650[1].t2;
-				Vst::Sample64 tmp_650_R = svf_650[1].m0 * svf_650[1].v0 + svf_650[1].m1 * svf_650[1].v1 + svf_650[1].m2 * svf_650[1].v2;
-
-				svf_2k5[1].vin = inputSampleR;
-				svf_2k5[1].t0 = svf_2k5[1].vin - svf_2k5[1].ic2eq;
-				svf_2k5[1].v0 = svf_2k5[1].gt0 * svf_2k5[1].t0 - svf_2k5[1].gk0 * svf_2k5[1].ic1eq;
-				svf_2k5[1].t1 = svf_2k5[1].gt1 * svf_2k5[1].t0 - svf_2k5[1].gk1 * svf_2k5[1].ic1eq;
-				svf_2k5[1].t2 = svf_2k5[1].gt2 * svf_2k5[1].t0 + svf_2k5[1].gt1 * svf_2k5[1].ic1eq;
-				svf_2k5[1].v1 = svf_2k5[1].t1 + svf_2k5[1].ic1eq;
-				svf_2k5[1].v2 = svf_2k5[1].t2 + svf_2k5[1].ic2eq;
-				svf_2k5[1].ic1eq += 2.0 * svf_2k5[1].t1;
-				svf_2k5[1].ic2eq += 2.0 * svf_2k5[1].t2;
-				Vst::Sample64 tmp_2k5_R = svf_2k5[1].m0 * svf_2k5[1].v0 + svf_2k5[1].m1 * svf_2k5[1].v1 + svf_2k5[1].m2 * svf_2k5[1].v2;
-
-				svf_Sky[1].vin = inputSampleR;
-				svf_Sky[1].t0 = svf_Sky[1].vin - svf_Sky[1].ic2eq;
-				svf_Sky[1].v0 = svf_Sky[1].gt0 * svf_Sky[1].t0 - svf_Sky[1].gk0 * svf_Sky[1].ic1eq;
-				svf_Sky[1].t1 = svf_Sky[1].gt1 * svf_Sky[1].t0 - svf_Sky[1].gk1 * svf_Sky[1].ic1eq;
-				svf_Sky[1].t2 = svf_Sky[1].gt2 * svf_Sky[1].t0 + svf_Sky[1].gt1 * svf_Sky[1].ic1eq;
-				svf_Sky[1].v1 = svf_Sky[1].t1 + svf_Sky[1].ic1eq;
-				svf_Sky[1].v2 = svf_Sky[1].t2 + svf_Sky[1].ic2eq;
-				svf_Sky[1].ic1eq += 2.0 * svf_Sky[1].t1;
-				svf_Sky[1].ic2eq += 2.0 * svf_Sky[1].t2;
-				Vst::Sample64 tmp_sky_R = svf_Sky[1].m0 * svf_Sky[1].v0 + svf_Sky[1].m1 * svf_Sky[1].v1 + svf_Sky[1].m2 * svf_Sky[1].v2;
-
-
-				dataOutL += tmp_sub_L * BP_gain_Sub;
-				dataOutL += tmp_40_L * BP_gain_40;
-				dataOutL += tmp_160_L * BP_gain_160;
-				dataOutL += tmp_650_L * BP_gain_650;
-				dataOutL += tmp_2k5_L * HP_gain_2k5;
-				dataOutL += tmp_sky_L * HP_gain_Sky;
-
-				dataOutR += tmp_sub_R * BP_gain_Sub;
-				dataOutR += tmp_40_R * BP_gain_40;
-				dataOutR += tmp_160_R * BP_gain_160;
-				dataOutR += tmp_650_R * BP_gain_650;
-				dataOutR += tmp_2k5_R * HP_gain_2k5;
-				dataOutR += tmp_sky_R * HP_gain_Sky;
-
-				inputSampleL = dataOutL; // * gain;
-				inputSampleR = dataOutR; // * gain;
-
-				*Out_L = inputSampleL;
-				*Out_R = inputSampleR;
-
-				Out_L++;
-				Out_R++;
 			}
 		}
 		return;
@@ -707,163 +692,144 @@ namespace yg331 {
 
 
 	template <typename SampleType>
-	void Sky_Blue_EQ4Processor::bypass_latency(SampleType** inputs, SampleType** outputs, Steinberg::int32 sampleFrames)
+	void Sky_Blue_EQ4Processor::bypass_latency(
+		SampleType** inputs, 
+		SampleType** outputs, 
+		Steinberg::int32 numChannels, 
+		Steinberg::int32 sampleFrames)
 	{
-		SampleType* In_L = (SampleType*)inputs[0];
-		SampleType* In_R = (SampleType*)inputs[1];
-		SampleType* Out_L = (SampleType*)outputs[0];
-		SampleType* Out_R = (SampleType*)outputs[1];
+		for (int32 channel = 0; channel < numChannels; channel++)
+		{
+			int32 samples = sampleFrames;
+			SampleType* ptrIn = (SampleType*)inputs[channel];
+			SampleType* ptrOut = (SampleType*)outputs[channel];
 
-		int32 latency = 0;
-		if (fParamOS == overSample_1x) {
-			memcpy(outputs[0], inputs[0], sizeof(SampleType) * sampleFrames);
-			memcpy(outputs[1], inputs[1], sizeof(SampleType) * sampleFrames);
-			return;
-		}
-		else if (fParamOS == overSample_2x) latency = 12;
-		else latency = 24;
-
-		while (--sampleFrames >= 0) {
-			SampleType inputSampleL = *In_L;
-			SampleType inputSampleR = *In_R;
-			In_L++;
-			In_R++;
-			*Out_L = (SampleType)delay_buff[0][latency - 1];
-			*Out_R = (SampleType)delay_buff[1][latency - 1];
-			for (int i = latency - 1; i > 0; i--) {
-				delay_buff[0][i] = delay_buff[0][i - 1];
-				delay_buff[1][i] = delay_buff[1][i - 1];
+			int32 latency = 0;
+			if (fParamOS == overSample_1x) {
+				memcpy(outputs[channel], inputs[channel], sizeof(SampleType) * sampleFrames);
+				continue;
 			}
-			delay_buff[0][0] = inputSampleL;
-			delay_buff[1][0] = inputSampleR;
-			Out_L++;
-			Out_R++;
+			else if (fParamOS == overSample_2x) latency = 12;
+			else latency = 24;
+
+			while (--samples >= 0)
+			{
+				Vst::Sample64 inputSample = *ptrIn;
+				ptrIn++;
+				*ptrOut = (SampleType)delay_buff[channel][latency - 1];
+				for (int i = latency - 1; i > 0; i--) {
+					delay_buff[channel][i] = delay_buff[channel][i - 1];
+				}
+				delay_buff[channel][0] = inputSample;
+				ptrOut++;
+			}
 		}
 		return;
 	}
 
 	template <typename SampleType>
-	void Sky_Blue_EQ4Processor::proc_out(Vst::Sample64** inputs, SampleType** outputs, int32 sampleFrames)
+	void Sky_Blue_EQ4Processor::proc_out(
+		Vst::Sample64** inputs, 
+		SampleType** outputs, 
+		Steinberg::int32 numChannels, 
+		int32 sampleFrames)
 	{
-		Vst::Sample64* In_L = inputs[0];
-		Vst::Sample64* In_R = inputs[1];
-		SampleType* Out_L = (SampleType*)outputs[0];
-		SampleType* Out_R = (SampleType*)outputs[1];
+		for (int32 channel = 0; channel < numChannels; channel++)
+		{
+			int32 samples = sampleFrames;
+			Vst::Sample64* ptrIn = (Vst::Sample64*)inputs[channel];
+			SampleType* ptrOut = (SampleType*)outputs[channel];
 
-		while (--sampleFrames >= 0) {
-			Vst::Sample64 inputSampleL = *In_L;
-			Vst::Sample64 inputSampleR = *In_R;
+			while (--samples >= 0) {
+				Vst::Sample64 inputSample = *ptrIn;
 
-			*Out_L = (SampleType)inputSampleL;
-			*Out_R = (SampleType)inputSampleR;
+				*ptrOut = (SampleType)inputSample;
 
-			In_L++;
-			In_R++;
-			Out_L++;
-			Out_R++;
+				ptrIn++;
+				ptrOut++;
+			}
 		}
 		return;
 	}
 
-	void Sky_Blue_EQ4Processor::FIR_dn_2_1(Vst::Sample64** inputs, Vst::Sample64** outputs, long sampleFrames) {
-		Vst::Sample64* In_L = inputs[0];
-		Vst::Sample64* In_R = inputs[1];
-		Vst::Sample64* Out_L = outputs[0];
-		Vst::Sample64* Out_R = outputs[1];
+	void Sky_Blue_EQ4Processor::FIR_dn_2_1(
+		Vst::Sample64** inputs, 
+		Vst::Sample64** outputs, 
+		Steinberg::int32 numChannels, 
+		long sampleFrames) 
+	{
+		for (int32 channel = 0; channel < numChannels; channel++)
+		{
+			int32 samples = sampleFrames;
+			Vst::Sample64* ptrIn = (Vst::Sample64*)inputs[channel];
+			Vst::Sample64* ptrOut = (Vst::Sample64*)outputs[channel];
 
-		int sf = sampleFrames;
+			while (--samples >= 0) {
 
-		while (--sf >= 0) {
+				Vst::Sample64 inputSample = *ptrIn;
 
-			Vst::Sample64 inputSampleL = *In_L;
-			Vst::Sample64 inputSampleR = *In_R;
+				double Tmp = IR_coef_Dn_2[0] * inputSample;
+				for (int iter = 1, index = 0; iter < Num_coef_dn_2; iter += 1) {
+					Tmp += IR_coef_Dn_2[iter] * IR_buff_Dn_2[channel][index];
+					index++;
+				}
+				*ptrOut = Tmp;
+				ptrOut++;
 
+				for (int k = Num_buff_dn_2; k > 2; k--) IR_buff_Dn_2[channel][k - 1] = IR_buff_Dn_2[channel][k - 3];
 
-			double L = IR_coef_Dn_2[0] * inputSampleL;
-			double R = IR_coef_Dn_2[0] * inputSampleR;
-			for (int iter = 1, index = 0; iter < Num_coef_dn_2; iter += 1) {
-				L += IR_coef_Dn_2[iter] * IR_buff_Dn_2[0][index];
-				R += IR_coef_Dn_2[iter] * IR_buff_Dn_2[1][index];
-				index++;
+				IR_buff_Dn_2[channel][1] = inputSample;
+				ptrIn++;
+
+				inputSample = *ptrIn;
+				IR_buff_Dn_2[channel][0] = inputSample;
+				ptrIn++;
 			}
-			*Out_L = L;
-			*Out_R = R;
-			Out_L++;
-			Out_R++;
-
-			for (int k = Num_buff_dn_2; k > 2; k--) IR_buff_Dn_2[0][k - 1] = IR_buff_Dn_2[0][k - 3];
-			for (int k = Num_buff_dn_2; k > 2; k--) IR_buff_Dn_2[1][k - 1] = IR_buff_Dn_2[1][k - 3];
-
-			IR_buff_Dn_2[0][1] = inputSampleL;
-			IR_buff_Dn_2[1][1] = inputSampleR;
-			In_L++;
-			In_R++;
-
-			inputSampleL = *In_L;
-			inputSampleR = *In_R;
-			IR_buff_Dn_2[0][0] = inputSampleL;
-			IR_buff_Dn_2[1][0] = inputSampleR;
-			In_L++;
-			In_R++;
 		}
 		return;
 	}
 
-	void Sky_Blue_EQ4Processor::FIR_dn_4_1(Vst::Sample64** inputs, Vst::Sample64** outputs, long sampleFrames) {
-		Vst::Sample64* In_L = inputs[0];
-		Vst::Sample64* In_R = inputs[1];
-		Vst::Sample64* Out_L = outputs[0];
-		Vst::Sample64* Out_R = outputs[1];
+	void Sky_Blue_EQ4Processor::FIR_dn_4_1(
+		Vst::Sample64** inputs, 
+		Vst::Sample64** outputs, 
+		Steinberg::int32 numChannels, 
+		long sampleFrames) 
+	{
+		for (int32 channel = 0; channel < numChannels; channel++)
+		{
+			int32 samples = sampleFrames;
+			Vst::Sample64* ptrIn  = (Vst::Sample64*)inputs[channel];
+			Vst::Sample64* ptrOut = (Vst::Sample64*)outputs[channel];
 
-		int sf = sampleFrames;
+			while (--samples >= 0) {
 
-		while (--sf >= 0) {
+				Vst::Sample64 inputSample = *ptrIn;
 
-			Vst::Sample64 inputSampleL = *In_L;
-			Vst::Sample64 inputSampleR = *In_R;
+				double Tmp = IR_coef_Dn_22[0] * inputSample;
+				for (int iter = 1, index = 0; iter < Num_coef_dn_22; iter += 1) {
+					Tmp += IR_coef_Dn_22[iter] * IR_buff_Dn_22[channel][index];
+					index++;
+				}
+				*ptrOut = Tmp;
+				ptrOut++;
 
+				for (int k = Num_buff_dn_22; k > 4; k--) IR_buff_Dn_22[channel][k - 1] = IR_buff_Dn_22[channel][k - 5];
 
-			double L = IR_coef_Dn_22[0] * inputSampleL;
-			double R = IR_coef_Dn_22[0] * inputSampleR;
-			for (int iter = 1, index = 0; iter < Num_coef_dn_22; iter += 1) {
-				L += IR_coef_Dn_22[iter] * IR_buff_Dn_22[0][index];
-				R += IR_coef_Dn_22[iter] * IR_buff_Dn_22[1][index];
-				index++;
+				IR_buff_Dn_22[channel][3] = inputSample;
+				ptrIn++;
+
+				inputSample = *ptrIn;
+				IR_buff_Dn_22[channel][2] = inputSample;
+				ptrIn++;
+
+				inputSample = *ptrIn;
+				IR_buff_Dn_22[channel][1] = inputSample;
+				ptrIn++;
+
+				inputSample = *ptrIn;
+				IR_buff_Dn_22[channel][0] = inputSample;
+				ptrIn++;
 			}
-			*Out_L = L;
-			*Out_R = R;
-			Out_L++;
-			Out_R++;
-
-			for (int k = Num_buff_dn_22; k > 4; k--) IR_buff_Dn_22[0][k - 1] = IR_buff_Dn_22[0][k - 5];
-			for (int k = Num_buff_dn_22; k > 4; k--) IR_buff_Dn_22[1][k - 1] = IR_buff_Dn_22[1][k - 5];
-
-
-			IR_buff_Dn_22[0][3] = inputSampleL;
-			IR_buff_Dn_22[1][3] = inputSampleR;
-			In_L++;
-			In_R++;
-
-			inputSampleL = *In_L;
-			inputSampleR = *In_R;
-			IR_buff_Dn_22[0][2] = inputSampleL;
-			IR_buff_Dn_22[1][2] = inputSampleR;
-			In_L++;
-			In_R++;
-
-			inputSampleL = *In_L;
-			inputSampleR = *In_R;
-			IR_buff_Dn_22[0][1] = inputSampleL;
-			IR_buff_Dn_22[1][1] = inputSampleR;
-			In_L++;
-			In_R++;
-
-			inputSampleL = *In_L;
-			inputSampleR = *In_R;
-			IR_buff_Dn_22[0][0] = inputSampleL;
-			IR_buff_Dn_22[1][0] = inputSampleR;
-			In_L++;
-			In_R++;
 		}
 		return;
 	}
@@ -872,6 +838,7 @@ namespace yg331 {
 	void Sky_Blue_EQ4Processor::overSampling(
 		SampleType** inputs,
 		SampleType** outputs,
+		Steinberg::int32 numChannels,
 		Vst::SampleRate getSampleRate,
 		int32 sampleFrames
 	)
@@ -884,30 +851,30 @@ namespace yg331 {
 		// memcpy(out_2[1], in_2[1], sizeof(SampleType) * len_4);
 
 		if (fParamOS == overSample_1x) {
-			processSVF<SampleType>(inputs, out_0, SR_1, sampleFrames);
+			processSVF<SampleType>(inputs, out_0, numChannels, SR_1, sampleFrames);
 			if (bParamBypass) {
-				bypass_latency<SampleType>(inputs, outputs, sampleFrames);
+				bypass_latency<SampleType>(inputs, outputs, numChannels, sampleFrames);
 				return;
 			}
 		}
 		else if (fParamOS == overSample_2x) {
-			processSVF<SampleType>(inputs, out_1, SR_2, sampleFrames);
+			processSVF<SampleType>(inputs, out_1, numChannels, SR_2, sampleFrames);
 			if (bParamBypass) {
-				bypass_latency<SampleType>(inputs, outputs, sampleFrames);
+				bypass_latency<SampleType>(inputs, outputs, numChannels, sampleFrames);
 				return;
 			}
-			FIR_dn_2_1(out_1, out_0, sampleFrames);
+			FIR_dn_2_1(out_1, out_0, numChannels, sampleFrames);
 		}
 		else {
-			processSVF<SampleType>(inputs, out_2, SR_4, sampleFrames);
+			processSVF<SampleType>(inputs, out_2, numChannels, SR_4, sampleFrames);
 			if (bParamBypass) {
-				bypass_latency<SampleType>(inputs, outputs, sampleFrames);
+				bypass_latency<SampleType>(inputs, outputs, numChannels, sampleFrames);
 				return;
 			}
-			FIR_dn_4_1(out_2, out_0, sampleFrames);
+			FIR_dn_4_1(out_2, out_0, numChannels, sampleFrames);
 		}
 
-		proc_out<SampleType>(out_0, (SampleType**)outputs, sampleFrames);
+		proc_out<SampleType>(out_0, (SampleType**)outputs, numChannels, sampleFrames);
 
 		return;
 	}
