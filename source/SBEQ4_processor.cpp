@@ -234,9 +234,8 @@ namespace yg331 {
 		void** out = getChannelBuffersPointer(processSetup, data.outputs[0]);
 		Vst::SampleRate getSampleRate = processSetup.sampleRate;
 
-
 		//---check if silence---------------
-        if (data.inputs[0].silenceFlags == Vst::getChannelMask (data.inputs[0].numChannels))
+        if (data.inputs[0].silenceFlags == ((data.inputs[0].numChannels >= 64) ? kMaxInt64u : ((uint64)1 << data.inputs[0].numChannels) - 1))
         {
             // mark output silence too (it will help the host to propagate the silence)
             data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
