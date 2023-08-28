@@ -5,7 +5,7 @@ Internal sample rated fixed at 192/176.2kHz in 48/44.1kHz, 96/88.1kHz, 192/176.2
 It does run under 44.1kHz, but may have some EQ curve cramping.  
 At 48/44.1kHz - x4 oversampling is on with 24 sample latency, and at 96/88.1kHz - x2 oversampling is on with 12 sample latency.  
 
-Windows and Mac, VST3.  
+Windows and Mac, VST3 and AU.  
 
 <img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/97e4e687-3212-4a64-8bfa-03322c38140b"  width="600"/>  
 
@@ -17,14 +17,15 @@ Unzip Win.zip from latest release and copy to "C:\Program Files\Common Files\VST
 
 2. MacOS(Intel tested, Apple Silicon not tested).  
 
-Unzip MacOS.zip from latest release and copy to "/Library/Audio/Plug-Ins/VST3".  
-
-I Code Signed the package, hope this work as it is.  
+Unzip MacOS.zip from latest release and copy vst3 to "/Library/Audio/Plug-Ins/VST3" and component to "/Library/Audio/Plug-Ins/Components".  
 
 > If it doesn't go well, configure security options in console as  
+>  
 > ``` console  
 > sudo xattr -r -d com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Sky_Blue_EQ4.vst3  
+> sudo xattr -r -d com.apple.quarantine /Library/Audio/Plug-Ins/Components/Sky_Blue_EQ4.component  
 > ```  
+>  
 > tested by @jonasborneland [here](https://github.com/Kiriki-liszt/JS_Inflator_to_VST2_VST3/issues/12#issuecomment-1616671177)
 
 ## Licensing  
@@ -45,8 +46,9 @@ VSTGUI 4.12 used
 
 ## Version logs
 
-v0.0.1  : intial try.  
-v0.0.2  : GUI update.  
+v0.0.1   : intial try.  
+v0.0.2   : GUI update.  
+v1.0.0.b : AU added.  
 
 ## What I've learned
 
