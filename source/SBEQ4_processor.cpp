@@ -54,8 +54,8 @@ namespace yg331 {
 		}
 
 		//--- create Audio IO ------
-		addAudioInput(STR16("Stereo In"), Steinberg::Vst::SpeakerArr::kStereo);
-		addAudioOutput(STR16("Stereo Out"), Steinberg::Vst::SpeakerArr::kStereo);
+        addAudioInput (STR16 ("Audio Input"), Vst::SpeakerArr::kStereo);
+        addAudioOutput (STR16 ("Audio Output"), Vst::SpeakerArr::kStereo);
 
 		/* If you don't need an event bus, you can remove the next line */
 		// addEventInput(STR16("Event In"), 1);
@@ -77,67 +77,67 @@ namespace yg331 {
 
 		return kResultOk;
 	}
+ 
+ //------------------------------------------------------------------------
+ tresult PLUGIN_API Sky_Blue_EQ4Processor::setBusArrangements(
+     Vst::SpeakerArrangement* inputs, int32 numIns,
+     Vst::SpeakerArrangement* outputs, int32 numOuts)
+ {
+     if (numIns == 1 && numOuts == 1)
+     {
+         // the host wants Mono => Mono (or 1 channel -> 1 channel)
+         if (Vst::SpeakerArr::getChannelCount(inputs[0]) == 1 &&
+             Vst::SpeakerArr::getChannelCount(outputs[0]) == 1)
+         {
+             auto* bus = FCast<Vst::AudioBus>(audioInputs.at(0));
+             if (bus)
+             {
+                 // check if we are Mono => Mono, if not we need to recreate the busses
+                 if (bus->getArrangement() != inputs[0])
+                 {
+                     getAudioInput(0)->setArrangement(inputs[0]);
+                     getAudioInput(0)->setName(STR16("Mono In"));
+                     getAudioOutput(0)->setArrangement(outputs[0]);
+                     getAudioOutput(0)->setName(STR16("Mono Out"));
+                 }
+                 return kResultOk;
+             }
+         }
+         // the host wants something else than Mono => Mono,
+         // in this case we are always Stereo => Stereo
+         else
+         {
+             auto* bus = FCast<Vst::AudioBus>(audioInputs.at(0));
+             if (bus)
+             {
+                 tresult result = kResultFalse;
 
-	//------------------------------------------------------------------------
-	tresult PLUGIN_API Sky_Blue_EQ4Processor::setBusArrangements(
-		Vst::SpeakerArrangement* inputs, int32 numIns,
-		Vst::SpeakerArrangement* outputs, int32 numOuts)
-	{
-		if (numIns == 1 && numOuts == 1)
-		{
-			// the host wants Mono => Mono (or 1 channel -> 1 channel)
-			if (Vst::SpeakerArr::getChannelCount(inputs[0]) == 1 &&
-				Vst::SpeakerArr::getChannelCount(outputs[0]) == 1)
-			{
-				auto* bus = FCast<Vst::AudioBus>(audioInputs.at(0));
-				if (bus)
-				{
-					// check if we are Mono => Mono, if not we need to recreate the busses
-					if (bus->getArrangement() != inputs[0])
-					{
-						getAudioInput(0)->setArrangement(inputs[0]);
-						getAudioInput(0)->setName(STR16("Mono In"));
-						getAudioOutput(0)->setArrangement(inputs[0]);
-						getAudioOutput(0)->setName(STR16("Mono Out"));
-					}
-					return kResultOk;
-				}
-			}
-			// the host wants something else than Mono => Mono,
-			// in this case we are always Stereo => Stereo
-			else
-			{
-				auto* bus = FCast<Vst::AudioBus>(audioInputs.at(0));
-				if (bus)
-				{
-					tresult result = kResultFalse;
+                 // the host wants 2->2 (could be LsRs -> LsRs)
+                 if (Vst::SpeakerArr::getChannelCount(inputs[0]) == 2 &&
+                     Vst::SpeakerArr::getChannelCount(outputs[0]) == 2)
+                 {
+                     getAudioInput(0)->setArrangement(inputs[0]);
+                     getAudioInput(0)->setName(STR16("Stereo In"));
+                     getAudioOutput(0)->setArrangement(outputs[0]);
+                     getAudioOutput(0)->setName(STR16("Stereo Out"));
+                     result = kResultTrue;
+                 }
+                 // the host want something different than 1->1 or 2->2 : in this case we want stereo
+                 else if (bus->getArrangement() != Vst::SpeakerArr::kStereo)
+                 {
+                     getAudioInput(0)->setArrangement(Vst::SpeakerArr::kStereo);
+                     getAudioInput(0)->setName(STR16("Stereo In"));
+                     getAudioOutput(0)->setArrangement(Vst::SpeakerArr::kStereo);
+                     getAudioOutput(0)->setName(STR16("Stereo Out"));
+                     result = kResultFalse;
+                 }
 
-					// the host wants 2->2 (could be LsRs -> LsRs)
-					if (Vst::SpeakerArr::getChannelCount(inputs[0]) == 2 &&
-						Vst::SpeakerArr::getChannelCount(outputs[0]) == 2)
-					{
-						getAudioInput(0)->setArrangement(inputs[0]);
-						getAudioInput(0)->setName(STR16("Stereo In"));
-						getAudioOutput(0)->setArrangement(outputs[0]);
-						getAudioOutput(0)->setName(STR16("Stereo Out"));
-						result = kResultTrue;
-					}
-					// the host want something different than 1->1 or 2->2 : in this case we want stereo
-					else if (bus->getArrangement() != Vst::SpeakerArr::kStereo)
-					{
-						getAudioInput(0)->setArrangement(Vst::SpeakerArr::kStereo);
-						getAudioInput(0)->setName(STR16("Stereo In"));
-						getAudioOutput(0)->setArrangement(Vst::SpeakerArr::kStereo);
-						getAudioOutput(0)->setName(STR16("Stereo Out"));
-						result = kResultFalse;
-					}
-
-					return result;
-				}
-			}
-		}
-		return kResultFalse;
-	}
+                 return result;
+             }
+         }
+     }
+     return kResultFalse;
+ }
 
 
 	//------------------------------------------------------------------------
@@ -236,26 +236,23 @@ namespace yg331 {
 
 
 		//---check if silence---------------
-		if (data.inputs[0].silenceFlags != 0) // if flags is not zero => then it means that we have silent!
-		{
-			// As we know that the input is only filled with zero, the output will be then filled with zero too!
+        if (data.inputs[0].silenceFlags == Vst::getChannelMask (data.inputs[0].numChannels))
+        {
+            // mark output silence too (it will help the host to propagate the silence)
+            data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 
-			data.outputs[0].silenceFlags = 0;
-
-			if (data.inputs[0].silenceFlags & (uint64)1) { // Left
-				if (in[0] != out[0]) memset(out[0], 0, sampleFramesSize);
-				data.outputs[0].silenceFlags |= (uint64)1 << (uint64)0;
-			}
-
-			if (data.inputs[0].silenceFlags & (uint64)2) { // Right
-				if (in[1] != out[1]) memset(out[1], 0, sampleFramesSize);
-				data.outputs[0].silenceFlags |= (uint64)1 << (uint64)1;
-			}
-
-			if (data.inputs[0].silenceFlags & (uint64)3) {
-				return kResultOk;
-			}
-		}
+            // the plug-in has to be sure that if it sets the flags silence that the output buffer are
+            // clear
+            for (int32 i = 0; i < numChannels; i++)
+            {
+                // do not need to be cleared if the buffers are the same (in this case input buffer are already cleared by the host)
+                if (in[i] != out[i])
+                {
+                    memset (out[i], 0, sampleFramesSize);
+                }
+            }
+            return kResultOk;
+        }
 
 		data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 
