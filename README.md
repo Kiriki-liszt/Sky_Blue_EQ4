@@ -118,6 +118,11 @@ So, I designed my EQ in strictly Parallel topology with no input signal blended 
 The EQ algorythm for Band-pass and High-pass filters is SVF sugested by Andy Cytomic.  
 Used his 'trapezoidal SVF in tangent and state space form'.  
 
+### 6. AU Wrapper
+
+Be carefull of plist.info.  
+subtype colision happens.  
+
 ## references
 
 1. Sound on Sound - maag EQ4M  
