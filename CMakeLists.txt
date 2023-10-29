@@ -15,7 +15,7 @@ project(Sky_Blue_EQ4
     # This is your plug-in version number. Change it here only.
     # Version number symbols usable in C++ can be found in
     # source/version.h and ${PROJECT_BINARY_DIR}/projectversion.h.
-    VERSION 1.0.0.0 
+    VERSION 1.0.1.1
     DESCRIPTION "Sky_Blue_EQ4 VST 3 Plug-in"
 )
 
@@ -35,7 +35,7 @@ smtg_add_vst3plugin(Sky_Blue_EQ4
 )
 
 #- VSTGUI Wanted ----
-if(SMTG_ADD_VSTGUI)
+if(SMTG_ENABLE_VSTGUI_SUPPORT)
     target_sources(Sky_Blue_EQ4
         PRIVATE
             resource/SBEQ4_editor.uidesc
@@ -47,18 +47,18 @@ if(SMTG_ADD_VSTGUI)
     smtg_target_add_plugin_resources(Sky_Blue_EQ4
         RESOURCES
             "resource/SBEQ4_editor.uidesc"
-            "resource/SB_background.png"
-            "resource/SB_bypass.png"
-            "resource/SB_knob_air.png"
-            "resource/SB_knob_black.png"
-            "resource/SB_knob_blue.png"
-            "resource/SB_knob_green.png"
-            "resource/SB_knob_magenta.png"
-            "resource/SB_knob_orange.png"
-            "resource/SB_knob_white.png"
-            "resource/SB_knob_yellow.png"
+            "resource/SBEQ4_background.png"
+            "resource/SBEQ4_bypass.png"
+            "resource/SBEQ4_knob_air.png"
+            "resource/SBEQ4_knob_black.png"
+            "resource/SBEQ4_knob_blue.png"
+            "resource/SBEQ4_knob_green.png"
+            "resource/SBEQ4_knob_magenta.png"
+            "resource/SBEQ4_knob_orange.png"
+            "resource/SBEQ4_knob_white.png"
+            "resource/SBEQ4_knob_yellow.png"
     )
-endif(SMTG_ADD_VSTGUI)
+endif(SMTG_ENABLE_VSTGUI_SUPPORT)
 # -------------------
 
 smtg_target_add_plugin_snapshots (Sky_Blue_EQ4

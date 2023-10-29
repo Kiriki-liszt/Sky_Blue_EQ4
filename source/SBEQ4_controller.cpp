@@ -10,8 +10,6 @@
 #include "base/source/fstreamer.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
-
-#include "vstgui/vstgui.h"
 #include "vstgui/vstgui_uidescription.h"
 #include "vstgui/uidescription/detail/uiviewcreatorattributes.h"
 
@@ -298,31 +296,4 @@ namespace yg331 {
 	{
 		editors.erase(std::find(editors.begin(), editors.end(), editor));
 	}
-
-
-	using namespace VSTGUI;
-	MyControl::MyControl(const CRect& size) : CParamDisplay(size) {}
-
-	class MyControlFactory : public ViewCreatorAdapter
-	{
-	public:
-		//register this class with the view factory
-		MyControlFactory() { UIViewFactory::registerViewCreator(*this); }
-		//return an unique name here
-		IdStringPtr getViewName() const override { return "View on click"; }
-		//return the name here from where your custom view inherites.
-		//	Your view automatically supports the attributes from it.
-		IdStringPtr getBaseViewName() const override { return UIViewCreator::kCControl; }
-		//create your view here.
-		//	Note you don't need to apply attributes here as
-		//	the apply method will be called with this new view
-		CView* create(const UIAttributes& attributes, const IUIDescription* description) const override
-		{
-			CRect size(CPoint(45, 45), CPoint(400, 150));
-			return new MyControl(size);
-		}
-	};
-	//create a static instance so that it registers itself with the view factory
-	MyControlFactory __gMyControlFactory;
-
 } // namespace yg331

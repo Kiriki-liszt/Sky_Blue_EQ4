@@ -6,7 +6,6 @@
 
 #include "SBEQ4_cids.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
-#include "vstgui/vstgui.h"
 
 namespace yg331 {
 	//------------------------------------------------------------------------
@@ -111,28 +110,6 @@ namespace yg331 {
             (Steinberg::tchar*) STR16("0.0")
 		};
 	};
-
-
-	using namespace VSTGUI;
-	class MyControl : public CParamDisplay
-	{
-	public:
-		MyControl(const CRect& size);
-		CLASS_METHODS(MyControl, CParamDisplay);
-
-		CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override
-		{
-			return kMouseEventHandled; // needed to get the onMouseUp call
-		}
-		CMouseEventResult onMouseUp(CPoint& where, const CButtonState& buttons) override
-		{
-			if (buttons.isLeftButton() && getViewSize().pointInside(where))
-				doMouseClick();
-			return kMouseEventHandled;
-		}
-		void doMouseClick() {}
-	};
-
 
 	//------------------------------------------------------------------------
 } // namespace yg331
