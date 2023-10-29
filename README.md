@@ -49,6 +49,7 @@ VSTGUI 4.12 used
 v0.0.1   : intial try.  
 v0.0.2   : GUI update.  
 v1.0.0.b : AU added.  
+v1.0.1   : AUv2 plist subtype fixed.  
 
 ## What I've learned
 
