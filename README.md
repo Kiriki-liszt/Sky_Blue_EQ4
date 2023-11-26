@@ -23,7 +23,10 @@ Unzip MacOS.zip from latest release and copy vst3 to "/Library/Audio/Plug-Ins/VS
 >  
 > ``` console  
 > sudo xattr -r -d com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Sky_Blue_EQ4.vst3  
-> sudo xattr -r -d com.apple.quarantine /Library/Audio/Plug-Ins/Components/Sky_Blue_EQ4.component  
+> sudo xattr -r -d com.apple.quarantine /Library/Audio/Plug-Ins/Components/Sky_Blue_EQ4.component
+>
+> sudo codesign --force --sign - /Library/Audio/Plug-Ins/VST3/Sky_Blue_EQ4.vst3  
+> sudo codesign --force --sign - /Library/Audio/Plug-Ins/Components/Sky_Blue_EQ4.component
 > ```  
 >  
 > tested by @jonasborneland [here](https://github.com/Kiriki-liszt/JS_Inflator_to_VST2_VST3/issues/12#issuecomment-1616671177)
