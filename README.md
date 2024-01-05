@@ -67,15 +67,15 @@ The other way, is by oversampling it.
 If we oversample internal IIR filter, it'll create Frequency Response at targeted Oversampled Frequency.  
 Then EQ Shapes will be fixed, and Phase Response as well.  
 
-<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/86d167b5-8038-41fe-b4a3-d66b1166faa6"  width="600"/>  
+<img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/box_tone.png"  width="600"/>  
 
 Box tone, x4 oversampling at 48kHz to 196kHz.  
 
-<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/e2284855-84f1-40a3-aa0f-a3d18decb353"  width="600"/>  
+<img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/40k_5_FR.png"  width="600"/>  
 
 Sky High Band +5.0 @ 40kHz, Frequency Response, x4 Oversampling at 48kHz to 196kHz.  
 
-<img src="https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/b1efedcb-13f6-4ba3-8e48-913f4c454e24"  width="600"/>  
+<img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/40k_5_PR.png"  width="600"/>  
 
 Sky High Band +5.0 @ 40kHz, Phase Response, x4 oversampling at 48kHz to 196kHz.  
 
