@@ -32,7 +32,7 @@ namespace yg331 {
 		fParam40(Init_40),
 		fParamSub(Init_Sub),
 		bParamBypass(Init_Bypass),
-		fParamOS(overSample_4x)
+		fParamOS(overSample_1x)
 	{
 		//--- set the wanted controller for our processor
 		setControllerClass(kSky_Blue_EQ4ControllerUID);
@@ -63,11 +63,11 @@ namespace yg331 {
 		// addEventInput(STR16("Event In"), 1);
 
 		for (int channel = 0; channel < 2; channel++) {
-			calcFilter(96000.0, 0.0, 24000.0, dnTap_21, 100.00, dnSample_21[channel].coef); //
-			calcFilter(192000.0, 0.0, 24000.0, dnTap_42, 100.00, dnSample_42[channel].coef);
+			calcFilter(96000.0,  0.0, 24000.0, dnTap_21, 120.00, dnSample_21[channel].coef); //
+			calcFilter(192000.0, 0.0, 24000.0, dnTap_42, 120.00, dnSample_42[channel].coef);
 
 			for (int i = 0; i < dnTap_21; i++) dnSample_21[channel].coef[i] *= 2.0;
-			for (int i = 0; i < dnTap_42; i++) dnSample_42[channel].coef[i] *= 2.0;
+			for (int i = 0; i < dnTap_42; i++) dnSample_42[channel].coef[i] *= 4.0;
 		}
 
 		return kResultOk;
@@ -214,8 +214,7 @@ namespace yg331 {
 			return kResultOk;
 		}
 
-		// (simplification) we suppose in this example that we have the same input channel count than
-		// the output
+		// (simplification) we suppose in this example that we have the same input channel count than the output
 		int32 numChannels = data.inputs[0].numChannels;
 
 		//---get audio buffers----------------
@@ -225,34 +224,31 @@ namespace yg331 {
 		Vst::SampleRate getSampleRate = processSetup.sampleRate;
 
 		//---check if silence---------------
-        if (data.inputs[0].silenceFlags == ((data.inputs[0].numChannels >= 64) ? kMaxInt64u : ((uint64)1 << data.inputs[0].numChannels) - 1))
-        {
-            // mark output silence too (it will help the host to propagate the silence)
-            data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
+		// check if all channel are silent then process silent
+		if (data.inputs[0].silenceFlags == Vst::getChannelMask(data.inputs[0].numChannels))
+		{
+			// mark output silence too (it will help the host to propagate the silence)
+			data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 
-            // the plug-in has to be sure that if it sets the flags silence that the output buffer are
-            // clear
-            for (int32 i = 0; i < numChannels; i++)
-            {
-                // do not need to be cleared if the buffers are the same (in this case input buffer are already cleared by the host)
-                if (in[i] != out[i])
-                {
-                    memset (out[i], 0, sampleFramesSize);
-                }
-            }
-            return kResultOk;
-        }
+			// the plug-in has to be sure that if it sets the flags silence that the output buffer are clear
+			for (int32 channel = 0; channel < numChannels; channel++)
+			{
+				// do not need to be cleared if the buffers are the same (in this case input buffer are already cleared by the host)
+				if (in[channel] != out[channel])
+				{
+					memset(out[channel], 0, sampleFramesSize);
+				}
+			}
+			return kResultOk;
+		}
 
 		data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 
-		//---in bypass mode outputs should be like inputs-----
-		// handled with latency
-
 		if (data.symbolicSampleSize == Vst::kSample32) {
-			overSampling<Vst::Sample32>((Vst::Sample32**)in, (Vst::Sample32**)out, numChannels, getSampleRate, data.numSamples);
+			processSVF<Vst::Sample32>((Vst::Sample32**)in, (Vst::Sample32**)out, numChannels, getSampleRate, data.numSamples);
 		}
 		else {
-			overSampling<Vst::Sample64>((Vst::Sample64**)in, (Vst::Sample64**)out, numChannels, getSampleRate, data.numSamples);
+			processSVF<Vst::Sample64>((Vst::Sample64**)in, (Vst::Sample64**)out, numChannels, getSampleRate, data.numSamples);
 		}
 
 		return kResultOk;
@@ -261,8 +257,8 @@ namespace yg331 {
 	uint32 PLUGIN_API Sky_Blue_EQ4Processor::getLatencySamples()
 	{
 		if (fParamOS == overSample_1x) return 0;
-		else if (fParamOS == overSample_2x) return 12;
-		else return 24;
+		else if (fParamOS == overSample_2x) return latency_Fir_x2;
+		else return latency_Fir_x2;
 	}
 
 	tresult PLUGIN_API Sky_Blue_EQ4Processor::setupProcessing(Vst::ProcessSetup& newSetup)
@@ -281,11 +277,11 @@ namespace yg331 {
 			OS_target = newSetup.sampleRate;
 		}
 
-		double Fc_sub = 10.0;
-		double Fc_40 = 39.0;
-		double Fc_160 = 155.0;
-		double Fc_650 = 625.0;
-		double Fc_2k5 = 12.5;
+		const Vst::ParamValue Fc_sub = 10.0;
+		const Vst::ParamValue Fc_40  = 39.0;
+		const Vst::ParamValue Fc_160 = 155.0;
+		const Vst::ParamValue Fc_650 = 625.0;
+		const Vst::ParamValue Fc_2k5 = 12.5;
 
 		for (int channel = 0; channel < 2; channel++) {
 			setSVF(&svf_Sub[channel], kBP, 0.465, 1.0, Fc_sub, OS_target);
@@ -509,7 +505,7 @@ namespace yg331 {
 	template <typename SampleType>
 	void Sky_Blue_EQ4Processor::processSVF(
 		SampleType**     inputs, 
-		Vst::Sample64**  outputs, 
+		SampleType**     outputs,
 		Steinberg::int32 numChannels,
 		Steinberg::Vst::SampleRate getSampleRate, 
 		Steinberg::int32 sampleFrames)
@@ -536,33 +532,47 @@ namespace yg331 {
 		HP_gain_Sky = HP_Sky_arr[nParam_Sky];
 		if (fParamSkyFreq == 0.0) HP_gain_Sky = 0.0;
 
-		int32 loop = 1;
-		if (fParamOS == overSample_1x) loop = 1;
-		else if (fParamOS == overSample_2x) loop = 2;
-		else loop = 4;
+		int32 oversampling = 1;
+		if (fParamOS == overSample_2x) oversampling = 2;
+		else if (fParamOS == overSample_4x) oversampling = 4;
+
+		int32 latency = 0;
+		if (fParamOS == overSample_2x) latency = latency_Fir_x2;
+		else if (fParamOS == overSample_4x) latency = latency_Fir_x4;
 
 		for (int32 channel = 0; channel < numChannels; channel++)
 		{
 			int32 samples = sampleFrames;
+
 			SampleType* ptrIn  = (SampleType*)inputs[channel];
-			Vst::Sample64* ptrOut = (Vst::Sample64*)outputs[channel];
+			SampleType* ptrOut = (SampleType*)outputs[channel];
+
+			if (latency != latency_q[channel].size()) {
+				int32 diff = latency - (int32)latency_q[channel].size();
+				if   (diff > 0) for (int i = 0; i <  diff; i++) latency_q[channel].push(0.0);
+				else            for (int i = 0; i < -diff; i++) latency_q[channel].pop();
+			}
 
 			while (--samples >= 0)
 			{
 				Vst::Sample64 inputSample = *ptrIn;
 				ptrIn++;
-
+				Vst::Sample64 drySample = inputSample;
 				inputSample *= In_Atten;
 
-				for (int i = 0; i < loop; i++)
+				double up_x[4] = { 0.0, };
+				double up_y[4] = { 0.0, };
+
+				up_x[0] = inputSample;
+
+				// Process
+				for (int i = 0; i < oversampling; i++)
 				{
-					if (i > 0) {
-						inputSample = 0.0;
-					}
+					Vst::Sample64 overSampled = up_x[i];
 
-					//inputSample = computeSVF(&svf_LC[channel], inputSample);
+					//inputSample = computeSVF(&svf_LC[channel], overSampled);
 
-					svf_Sub[channel].vin = inputSample;
+					svf_Sub[channel].vin = overSampled;
 					svf_Sub[channel].t0 = svf_Sub[channel].vin - svf_Sub[channel].ic2eq;
 					svf_Sub[channel].v0 = svf_Sub[channel].gt0 * svf_Sub[channel].t0 - svf_Sub[channel].gk0 * svf_Sub[channel].ic1eq;
 					svf_Sub[channel].t1 = svf_Sub[channel].gt1 * svf_Sub[channel].t0 - svf_Sub[channel].gk1 * svf_Sub[channel].ic1eq;
@@ -575,7 +585,7 @@ namespace yg331 {
 					                      + svf_Sub[channel].m1 * svf_Sub[channel].v1 
 					                      + svf_Sub[channel].m2 * svf_Sub[channel].v2;
 
-					svf_40[channel].vin = inputSample;
+					svf_40[channel].vin = overSampled;
 					svf_40[channel].t0 = svf_40[channel].vin - svf_40[channel].ic2eq;
 					svf_40[channel].v0 = svf_40[channel].gt0 * svf_40[channel].t0 - svf_40[channel].gk0 * svf_40[channel].ic1eq;
 					svf_40[channel].t1 = svf_40[channel].gt1 * svf_40[channel].t0 - svf_40[channel].gk1 * svf_40[channel].ic1eq;
@@ -588,7 +598,7 @@ namespace yg331 {
 					                     + svf_40[channel].m1 * svf_40[channel].v1 
 					                     + svf_40[channel].m2 * svf_40[channel].v2;
 
-					svf_160[channel].vin = inputSample;
+					svf_160[channel].vin = overSampled;
 					svf_160[channel].t0 = svf_160[channel].vin - svf_160[channel].ic2eq;
 					svf_160[channel].v0 = svf_160[channel].gt0 * svf_160[channel].t0 - svf_160[channel].gk0 * svf_160[channel].ic1eq;
 					svf_160[channel].t1 = svf_160[channel].gt1 * svf_160[channel].t0 - svf_160[channel].gk1 * svf_160[channel].ic1eq;
@@ -601,7 +611,7 @@ namespace yg331 {
 					                      + svf_160[channel].m1 * svf_160[channel].v1 
 					                      + svf_160[channel].m2 * svf_160[channel].v2;
 
-					svf_650[channel].vin = inputSample;
+					svf_650[channel].vin = overSampled;
 					svf_650[channel].t0 = svf_650[channel].vin - svf_650[channel].ic2eq;
 					svf_650[channel].v0 = svf_650[channel].gt0 * svf_650[channel].t0 - svf_650[channel].gk0 * svf_650[channel].ic1eq;
 					svf_650[channel].t1 = svf_650[channel].gt1 * svf_650[channel].t0 - svf_650[channel].gk1 * svf_650[channel].ic1eq;
@@ -614,7 +624,7 @@ namespace yg331 {
 					                      + svf_650[channel].m1 * svf_650[channel].v1 
 					                      + svf_650[channel].m2 * svf_650[channel].v2;
 
-					svf_2k5[channel].vin = inputSample;
+					svf_2k5[channel].vin = overSampled;
 					svf_2k5[channel].t0 = svf_2k5[channel].vin - svf_2k5[channel].ic2eq;
 					svf_2k5[channel].v0 = svf_2k5[channel].gt0 * svf_2k5[channel].t0 - svf_2k5[channel].gk0 * svf_2k5[channel].ic1eq;
 					svf_2k5[channel].t1 = svf_2k5[channel].gt1 * svf_2k5[channel].t0 - svf_2k5[channel].gk1 * svf_2k5[channel].ic1eq;
@@ -627,7 +637,7 @@ namespace yg331 {
 					                      + svf_2k5[channel].m1 * svf_2k5[channel].v1 
 					                      + svf_2k5[channel].m2 * svf_2k5[channel].v2;
 
-					svf_Sky[channel].vin = inputSample;
+					svf_Sky[channel].vin = overSampled;
 					svf_Sky[channel].t0 = svf_Sky[channel].vin - svf_Sky[channel].ic2eq;
 					svf_Sky[channel].v0 = svf_Sky[channel].gt0 * svf_Sky[channel].t0 - svf_Sky[channel].gk0 * svf_Sky[channel].ic1eq;
 					svf_Sky[channel].t1 = svf_Sky[channel].gt1 * svf_Sky[channel].t0 - svf_Sky[channel].gk1 * svf_Sky[channel].ic1eq;
@@ -648,79 +658,37 @@ namespace yg331 {
 					dataOut += tmp_2k5 * HP_gain_2k5;
 					dataOut += tmp_sky * HP_gain_Sky;
 
-					inputSample = dataOut; // * gain;
-
-					*ptrOut = inputSample;
-
-					ptrOut++;
+					up_y[i] = dataOut; // * gain;
 				}
-			}
-		}
-		return;
-	}
 
+				// Downsampling
+				if (fParamOS == overSample_1x) inputSample = up_y[0];
+				else if (fParamOS == overSample_2x) Fir_x2_dn(up_y, &inputSample, channel);
+				else Fir_x4_dn(up_y, &inputSample, channel);
 
-
-	template <typename SampleType>
-	void Sky_Blue_EQ4Processor::bypass_latency(
-		SampleType** inputs, 
-		SampleType** outputs, 
-		Steinberg::int32 numChannels, 
-		Steinberg::int32 sampleFrames)
-	{
-		for (int32 channel = 0; channel < numChannels; channel++)
-		{
-			int32 samples = sampleFrames;
-			SampleType* ptrIn = (SampleType*)inputs[channel];
-			SampleType* ptrOut = (SampleType*)outputs[channel];
-
-			int32 latency = 0;
-			if (fParamOS == overSample_1x) {
-				memcpy(outputs[channel], inputs[channel], sizeof(SampleType) * sampleFrames);
-				continue;
-			}
-			else if (fParamOS == overSample_2x) latency = 12;
-			else latency = 24;
-
-			while (--samples >= 0)
-			{
-				Vst::Sample64 inputSample = *ptrIn;
-				ptrIn++;
-				*ptrOut = (SampleType)delay_buff[channel][latency - 1];
-				for (int i = latency - 1; i > 0; i--) {
-					delay_buff[channel][i] = delay_buff[channel][i - 1];
+				// Latency compensate
+				Vst::Sample64 delayed;
+				if (fParamOS == overSample_1x) {
+					delayed = drySample;
 				}
-				delay_buff[channel][0] = inputSample;
-				ptrOut++;
-			}
-		}
-		return;
-	}
+				else {
+					delayed = latency_q[channel].front();
+					latency_q[channel].pop();
+					latency_q[channel].push(drySample);
+				}
 
-	template <typename SampleType>
-	void Sky_Blue_EQ4Processor::proc_out(
-		Vst::Sample64** inputs, 
-		SampleType** outputs, 
-		Steinberg::int32 numChannels, 
-		int32 sampleFrames)
-	{
-		for (int32 channel = 0; channel < numChannels; channel++)
-		{
-			int32 samples = sampleFrames;
-			Vst::Sample64* ptrIn = (Vst::Sample64*)inputs[channel];
-			SampleType* ptrOut = (SampleType*)outputs[channel];
-
-			while (--samples >= 0) {
-				Vst::Sample64 inputSample = *ptrIn;
+				if (bParamBypass) {
+					inputSample = delayed;
+				}
 
 				*ptrOut = (SampleType)inputSample;
 
-				ptrIn++;
 				ptrOut++;
 			}
 		}
 		return;
 	}
+
 
 	void Sky_Blue_EQ4Processor::Fir_x2_dn(
 		Vst::Sample64* in, 
@@ -730,7 +698,7 @@ namespace yg331 {
 	{
 		double inter_21[2];
 
-		const size_t dnTap_21_size = sizeof(double) * (dnTap_21 - 2);
+		const size_t dnTap_21_size = sizeof(double) * (dnTap_21);
 		memmove(dnSample_21[channel].buff + 3, dnSample_21[channel].buff + 1, dnTap_21_size);
 		dnSample_21[channel].buff[2] = in[0];
 		dnSample_21[channel].buff[1] = in[1];
@@ -752,91 +720,25 @@ namespace yg331 {
 		Steinberg::int32 channel
 	)
 	{
-		double inter_42[4];
-		double inter_21[2];
+		double inter_42[2];
 
-		const size_t dnTap_42_size = sizeof(double) * (dnTap_42);
-		memmove(dnSample_42[channel].buff + 4, dnSample_42[channel].buff, dnTap_42_size);
+		int32 dnTap_42_size = sizeof(double) * (dnTap_42);
+		memmove(dnSample_42[channel].buff + 5, dnSample_42[channel].buff + 1, dnTap_42_size);
 		dnSample_42[channel].buff[4] = in[0]; // buff[3]
 		dnSample_42[channel].buff[3] = in[1];
 		dnSample_42[channel].buff[2] = in[2];
 		dnSample_42[channel].buff[1] = in[3];
 		__m128d _acc_out_a = _mm_setzero_pd();
-		__m128d _acc_out_b = _mm_setzero_pd();
 		for (int i = 0; i < dnTap_42; i += 2) { // tt >= dnTap_42+3
 			__m128d coef_a = _mm_load_pd(&dnSample_42[channel].coef[i]);
 			__m128d buff_a = _mm_load_pd(&dnSample_42[channel].buff[i + 4]);
-			//__m128d coef_b = _mm_load_pd(&dnSample_42[channel].coef[i    ]);
-			__m128d buff_b = _mm_load_pd(&dnSample_42[channel].buff[i + 2]);
 			__m128d _mul_a = _mm_mul_pd(coef_a, buff_a);
-			__m128d _mul_b = _mm_mul_pd(coef_a, buff_b);
 			_acc_out_a = _mm_add_pd(_acc_out_a, _mul_a);
-			_acc_out_b = _mm_add_pd(_acc_out_b, _mul_b);
 		}
 		_mm_store_pd(inter_42, _acc_out_a);
-		_mm_store_pd(inter_42 + 2, _acc_out_b);
-
-		const size_t dnTap_41_size = sizeof(double) * (dnTap_41);
-		memmove(dnSample_41[channel].buff + 3, dnSample_41[channel].buff + 1, dnTap_41_size);
-		dnSample_41[channel].buff[2] = inter_42[0] + inter_42[1];
-		dnSample_41[channel].buff[1] = inter_42[2] + inter_42[3];
-		__m128d _acc_out = _mm_setzero_pd();
-		for (int i = 0; i < dnTap_41; i += 2) {
-			__m128d coef = _mm_load_pd(&dnSample_41[channel].coef[i]);
-			__m128d buff = _mm_load_pd(&dnSample_41[channel].buff[i + 2]);
-			__m128d _mul = _mm_mul_pd(coef, buff);
-			_acc_out = _mm_add_pd(_acc_out, _mul);
-		}
-		_mm_store_pd(inter_21, _acc_out);
-		*out = inter_21[0] + inter_21[1];
+		*out = inter_42[0] + inter_42[1];
 		return;
 	}
-
-	template <typename SampleType>
-	void Sky_Blue_EQ4Processor::overSampling(
-		SampleType** inputs,
-		SampleType** outputs,
-		Steinberg::int32 numChannels,
-		Vst::SampleRate getSampleRate,
-		int32 sampleFrames
-	)
-	{
-		Vst::SampleRate SR_1 = getSampleRate;
-		Vst::SampleRate SR_2 = getSampleRate * 2.0;
-		Vst::SampleRate SR_4 = getSampleRate * 4.0;
-
-		// memcpy(out_2[0], in_2[0], sizeof(SampleType) * len_4);
-		// memcpy(out_2[1], in_2[1], sizeof(SampleType) * len_4);
-
-		if (fParamOS == overSample_1x) {
-			processSVF<SampleType>(inputs, out_0, numChannels, SR_1, sampleFrames);
-			if (bParamBypass) {
-				bypass_latency<SampleType>(inputs, outputs, numChannels, sampleFrames);
-				return;
-			}
-		}
-		else if (fParamOS == overSample_2x) {
-			processSVF<SampleType>(inputs, out_1, numChannels, SR_2, sampleFrames);
-			if (bParamBypass) {
-				bypass_latency<SampleType>(inputs, outputs, numChannels, sampleFrames);
-				return;
-			}
-			FIR_dn_2_1(out_1, out_0, numChannels, sampleFrames);
-		}
-		else {
-			processSVF<SampleType>(inputs, out_2, numChannels, SR_4, sampleFrames);
-			if (bParamBypass) {
-				bypass_latency<SampleType>(inputs, outputs, numChannels, sampleFrames);
-				return;
-			}
-			FIR_dn_4_1(out_2, out_0, numChannels, sampleFrames);
-		}
-
-		proc_out<SampleType>(out_0, (SampleType**)outputs, numChannels, sampleFrames);
-
-		return;
-	}
-
 
 	//------------------------------------------------------------------------
 } // namespace yg331

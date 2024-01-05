@@ -75,10 +75,11 @@ target_link_libraries(Sky_Blue_EQ4
 set(SIMDE_PATH "${PROJECT_BINARY_DIR}/../libs/simde" CACHE STRING "Path to simde library source tree")
 add_library(simde INTERFACE)
 target_include_directories(simde INTERFACE ${SIMDE_PATH})
-target_link_libraries(InflatorPackage
+target_link_libraries(Sky_Blue_EQ4
     PRIVATE 
         simde
 )
+smtg_target_setup_universal_binary(simde)
 
 smtg_target_configure_version_file(Sky_Blue_EQ4)
 
