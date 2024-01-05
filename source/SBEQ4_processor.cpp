@@ -32,7 +32,7 @@ namespace yg331 {
 		fParam40(Init_40),
 		fParamSub(Init_Sub),
 		bParamBypass(Init_Bypass),
-		fParamOS(overSample_1x)
+		fParamOS(overSample_4x)
 	{
 		//--- set the wanted controller for our processor
 		setControllerClass(kSky_Blue_EQ4ControllerUID);
@@ -63,8 +63,8 @@ namespace yg331 {
 		// addEventInput(STR16("Event In"), 1);
 
 		for (int channel = 0; channel < 2; channel++) {
-			calcFilter(96000.0,  0.0, 24000.0, dnTap_21, 120.00, dnSample_21[channel].coef); //
-			calcFilter(192000.0, 0.0, 24000.0, dnTap_42, 120.00, dnSample_42[channel].coef);
+			calcFilter(96000.0,  0.0, 24000.0, dnTap_21, 100.00, dnSample_21[channel].coef); //
+			calcFilter(192000.0, 0.0, 24000.0, dnTap_42, 100.00, dnSample_42[channel].coef);
 
 			for (int i = 0; i < dnTap_21; i++) dnSample_21[channel].coef[i] *= 2.0;
 			for (int i = 0; i < dnTap_42; i++) dnSample_42[channel].coef[i] *= 4.0;
@@ -256,9 +256,9 @@ namespace yg331 {
 
 	uint32 PLUGIN_API Sky_Blue_EQ4Processor::getLatencySamples()
 	{
-		if (fParamOS == overSample_1x) return 0;
+		if      (fParamOS == overSample_1x) return 0;
 		else if (fParamOS == overSample_2x) return latency_Fir_x2;
-		else return latency_Fir_x4;
+		else                                return latency_Fir_x4;
 	}
 
 	tresult PLUGIN_API Sky_Blue_EQ4Processor::setupProcessing(Vst::ProcessSetup& newSetup)
@@ -515,7 +515,9 @@ namespace yg331 {
 
 		Vst::Sample64 In_Atten = exp(log(10.0) * _db / 20.0);
 
-		coefSVF(getSampleRate);
+		if (fParamOS == overSample_2x) coefSVF(getSampleRate * 2.0);
+		else if (fParamOS == overSample_4x) coefSVF(getSampleRate * 4.0);
+		else coefSVF(getSampleRate);
 
 		int32 nParam_Sub = FromNormalized<Vst::ParamValue>(fParamSub, knob_stepCount);
 		int32 nParam_40  = FromNormalized<Vst::ParamValue>(fParam40,  knob_stepCount);
