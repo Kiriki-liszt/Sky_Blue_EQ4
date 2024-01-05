@@ -258,7 +258,7 @@ namespace yg331 {
 	{
 		if (fParamOS == overSample_1x) return 0;
 		else if (fParamOS == overSample_2x) return latency_Fir_x2;
-		else return latency_Fir_x2;
+		else return latency_Fir_x4;
 	}
 
 	tresult PLUGIN_API Sky_Blue_EQ4Processor::setupProcessing(Vst::ProcessSetup& newSetup)
