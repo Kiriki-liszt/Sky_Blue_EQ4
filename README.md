@@ -53,6 +53,7 @@ v0.0.1   : intial try.
 v0.0.2   : GUI update.  
 v1.0.0.b : AU added.  
 v1.0.1   : AUv2 plist subtype fixed.  
+v1.1.0   : FIR filter using Kaiser-Bessel window.  
 
 ## What I've learned
 
