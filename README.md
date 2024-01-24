@@ -1,6 +1,7 @@
 # Sky Blue EQ4
 
 Sky Blue EQ4 is maag-like tone shaping eq.  
+Runs in double precision 64-bit internal processing. Also double precision input / output if supported.  
 Internal sample rated fixed at 192/176.2kHz in 48/44.1kHz, 96/88.1kHz, 192/176.2kHz sample rates.  
 It does run under 44.1kHz, but may have some EQ curve cramping.  
 At 48/44.1kHz - x4 oversampling is on with 24 sample latency, and at 96/88.1kHz - x2 oversampling is on with 12 sample latency.  
