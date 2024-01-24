@@ -43,8 +43,7 @@ Unzip MacOS.zip from latest release and copy vst3 to "/Library/Audio/Plug-Ins/VS
 
 ![120C7E3245DD5916ACD2E8E6AD51E8FD_snapshot](https://github.com/Kiriki-liszt/Sky_Blue_EQ4/assets/107096260/142e3c12-cd5f-415d-9b72-8b4f04419633)
 
-
-VSTSDK 3.7.7 used  
+VSTSDK 3.7.9 used  
 VSTGUI 4.12 used  
 
 ## Version logs
