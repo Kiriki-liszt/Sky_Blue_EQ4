@@ -103,9 +103,6 @@ It'll interfere less than Serial EQs.
 Also the original Maag EQs are using parallel EQ topology.  
 Maag EQ is consisted of four Band-pass and one High-pass for re-constructing the frequency range, and one High-pass for adding 'Very High Frequency'.  
 
-However, The Plugin-alliance version is not strictly Parallel topology.  
-We can check this out with comparing with any Serial EQs like Pro-Q 3, as PA version Maag EQ curve can be recreated by simple Bell boosting.  
-
 ### 4. Different things about Maag EQ (and what I did)  
 
 One thing before explaining what I did, there is something really not common about original Maag EQ.  
@@ -113,9 +110,7 @@ When we boost or cut any band, the whole curve moves along.
 This makes mixing choices hard as it boosts, sound become 'better' because of the that gain increase.  
 I just want to hear what I do.  
 
-And maybe because of this characteristic, the PA version recreated that 'gain increase as boosting' by blending in Original signal.  
-This makes diffrence when boosting, Q for other band gets smaller, losing it's shape.  
-Another thing that I noticed is the low end is not going to -inf at 0 Hz.  
+Another thing that I noticed in plugin versions is that the low end is not going to -inf at 0 Hz.  
 These does not happen with original gear, for example Maag EQ4M at Sound on Sound review of it.  
 
 So, I designed my EQ in strictly Parallel topology with no input signal blended in, and without getting gain increase schema.  
