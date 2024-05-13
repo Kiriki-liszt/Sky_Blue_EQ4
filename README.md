@@ -71,15 +71,15 @@ Then EQ Shapes will be fixed, and Phase Response as well.
 
 <img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/box_tone.png"  width="600"/>  
 
-Box tone, x4 oversampling at 48kHz to 196kHz.  
+Box tone, x4 oversampling at 48kHz to 192kHz.  
 
 <img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/40k_5_FR.png"  width="600"/>  
 
-Sky High Band +5.0 @ 40kHz, Frequency Response, x4 Oversampling at 48kHz to 196kHz.  
+Sky High Band +5.0 @ 40kHz, Frequency Response, x4 Oversampling at 48kHz to 192kHz.  
 
 <img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/40k_5_PR.png"  width="600"/>  
 
-Sky High Band +5.0 @ 40kHz, Phase Response, x4 oversampling at 48kHz to 196kHz.  
+Sky High Band +5.0 @ 40kHz, Phase Response, x4 oversampling at 48kHz to 192kHz.  
 
 ### 2. Oversampling without 'Nonlinearity'  
 
@@ -102,6 +102,22 @@ It'll interfere less than Serial EQs.
 
 Also the original Maag EQs are using parallel EQ topology.  
 Maag EQ is consisted of four Band-pass and one High-pass for re-constructing the frequency range, and one High-pass for adding 'Very High Frequency'.  
+
+For example, we can view diffrences using two bands at once.  
+I'm using Sonnox Oxford EQ as Serial EQ.  
+
+<img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/Maag%20160Hz%20%2B2.5.png"  width="600"/>  
+
+This is 160Hz +2.5.  
+
+<img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/Maag%20650Hz%20%2B2.5.png"  width="600"/>  
+
+This is 650Hz +2.5.  
+
+<img src="https://raw.githubusercontent.com/Kiriki-liszt/Sky_Blue_EQ4/main/screenshot/Maag%20Parallel%20vs%20Serial.png"  width="600"/>  
+
+This is 160Hz +2.5 and 650Hz +2.5 both.  
+We can distinguish each peak better with Maag - Parallel topology.  
 
 ### 4. Different things about Maag EQ (and what I did)  
 
