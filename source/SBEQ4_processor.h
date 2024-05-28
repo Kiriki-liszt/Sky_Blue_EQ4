@@ -11,6 +11,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <queue>
+#include <deque>
+#ifndef M_PI
+#define M_PI        3.14159265358979323846264338327950288   /* pi             */
+#endif
 
 namespace yg331 {
 
@@ -65,8 +69,6 @@ namespace yg331 {
 		Steinberg::uint32 PLUGIN_API getLatencySamples() SMTG_OVERRIDE;
 
 	protected:
-		inline void coefSVF ( Steinberg::Vst::SampleRate Fs );
-
 		inline void setSVF
 		(
 			SVF_* svf_filter,
@@ -83,6 +85,21 @@ namespace yg331 {
 			Steinberg::Vst::Sample64 input
 		);
 
+		inline void setSVF
+		(
+			SVF_* svf_filter,
+			filter_type_6dB kFilter,
+			Steinberg::Vst::ParamValue gain,
+			Steinberg::Vst::Sample64 Fc,
+			Steinberg::Vst::Sample64 Fs
+		);
+
+		inline Steinberg::Vst::Sample64 computeSVF_6
+		(
+			SVF_* svf_filter,
+			Steinberg::Vst::Sample64 input
+		);
+
 		template <typename SampleType>
 		void processSVF
 		(
@@ -93,9 +110,6 @@ namespace yg331 {
 			Steinberg::int32 sampleFrames
 		);
 
-#ifndef M_PI
-#define M_PI        3.14159265358979323846264338327950288   /* pi             */
-#endif
 #define maxTap 256
 
 		inline double Ino(double x)
@@ -162,35 +176,35 @@ namespace yg331 {
 		SVF_ svf_Sub[2], svf_40[2], svf_160[2], svf_650[2], svf_2k5[2], svf_Sky[2];
 		SVF_ svf_LC[2], svf_HC[2];
 
-		Steinberg::Vst::Sample64 BP_gain_Sub;
-		Steinberg::Vst::Sample64 BP_gain_40;
-		Steinberg::Vst::Sample64 BP_gain_160;
-		Steinberg::Vst::Sample64 BP_gain_650;
-		Steinberg::Vst::Sample64 HP_gain_2k5;
-		Steinberg::Vst::Sample64 HP_gain_Sky;
+		Steinberg::Vst::Sample64 BP_gain_Sub = 0.0;
+		Steinberg::Vst::Sample64 BP_gain_40 = 0.0;
+		Steinberg::Vst::Sample64 BP_gain_160 = 0.0;
+		Steinberg::Vst::Sample64 BP_gain_650 = 0.0;
+		Steinberg::Vst::Sample64 HP_gain_2k5 = 0.0;
+		Steinberg::Vst::Sample64 HP_gain_Sky = 0.0;
 
-		const Steinberg::Vst::Sample64 BP_arr[21] = {
-			exp(log(10.0) * (6.0 - 7.5) / 20.0), //  0/20  -5.0
-			exp(log(10.0) * (6.0 - 7.4) / 20.0), //  1/20  -4.5
-			exp(log(10.0) * (6.0 - 7.3) / 20.0), //  2/20  -4.0
-			exp(log(10.0) * (6.0 - 7.2) / 20.0), //  3/20  -3.5
-			exp(log(10.0) * (6.0 - 6.8) / 20.0), //  4/20  -3.0
-			exp(log(10.0) * (6.0 - 6.1) / 20.0), //  5/20  -2.5
-			exp(log(10.0) * (6.0 - 5.7) / 20.0), //  6/20  -2.0
-			exp(log(10.0) * (6.0 - 4.5) / 20.0), //  7/20  -1.5
-			exp(log(10.0) * (6.0 - 3.0) / 20.0), //  8/20  -1.0
-			exp(log(10.0) * (6.0 - 1.0) / 20.0), //  9/20  -0.5
-			exp(log(10.0) * (6.0) / 20.0), // 10/20   0.0
-			exp(log(10.0) * (6.0 + 1.2) / 20.0), // +0.5
-			exp(log(10.0) * (6.0 + 2.3) / 20.0), // +1.0
-			exp(log(10.0) * (6.0 + 3.5) / 20.0), // +1.5
-			exp(log(10.0) * (6.0 + 5.7) / 20.0), // +2.0
-			exp(log(10.0) * (6.0 + 8.75) / 20.0), // +2.5
-			exp(log(10.0) * (6.0 + 9.65) / 20.0), // +3.0
-			exp(log(10.0) * (6.0 + 10.8) / 20.0), // +3.5
-			exp(log(10.0) * (6.0 + 12.05) / 20.0), // +4.0
-			exp(log(10.0) * (6.0 + 13.4) / 20.0), // +4.5
-			exp(log(10.0) * (6.0 + 13.5) / 20.0)  // +5.0
+		Steinberg::Vst::Sample64 BP_arr[21] = {
+			-7.5, //  0/20  -5.0
+			-7.4, //  1/20  -4.5
+			-7.3, //  2/20  -4.0
+			-7.2, //  3/20  -3.5
+			-6.8, //  4/20  -3.0
+			-6.1, //  5/20  -2.5
+			-5.7, //  6/20  -2.0
+			-4.5, //  7/20  -1.5
+			-3.0, //  8/20  -1.0
+			-1.0, //  9/20  -0.5
+			0.0, // 10/20   0.0
+			1.2, // +0.5
+			2.3, // +1.0
+			3.5, // +1.5
+			5.7, // +2.0
+			8.75, // +2.5
+			9.65, // +3.0
+			10.8, // +3.5
+			12.05, // +4.0
+			13.4, // +4.5
+			13.5  // +5.0
 		};
 		const Steinberg::Vst::Sample64 HP_arr[21] = {
 			exp(log(10.0) * (3.15 - 7.5) / 20.0), //  0/20  -5.0
@@ -216,28 +230,29 @@ namespace yg331 {
 			exp(log(10.0) * (3.15 + 13.5) / 20.0)  // +5.0
 		};
 		const Steinberg::Vst::Sample64 HP_Sky_arr[21] = {
-			exp(log(10.0) * (0.0 - 16.0) / 20.0), //  0.0
-			exp(log(10.0) * (0.0 - 15.8) / 20.0), //  0.5
-			exp(log(10.0) * (0.0 - 15.6) / 20.0), //  1.0
-			exp(log(10.0) * (0.0 - 15.0) / 20.0), //  1.5
-			exp(log(10.0) * (0.0 - 14.5) / 20.0), //  2.0
-			exp(log(10.0) * (0.0 - 13.0) / 20.0), //  2.5
-			exp(log(10.0) * (0.0 - 11.8) / 20.0), //  3.0
-			exp(log(10.0) * (0.0 - 9.4) / 20.0), //  3.5
-			exp(log(10.0) * (0.0 - 5.9) / 20.0), //  4.0
-			exp(log(10.0) * (0.0 - 3.1) / 20.0), //  4.5
-			exp(log(10.0) * (0.0 - 1.5) / 20.0), // 5.0
-			exp(log(10.0) * (0.0 - 0.3) / 20.0), // 5.5
-			exp(log(10.0) * (0.0 + 1.2) / 20.0), // 6.0
-			exp(log(10.0) * (0.0 + 2.8) / 20.0), // 6.5
-			exp(log(10.0) * (0.0 + 5.2) / 20.0), // 7.0
-			exp(log(10.0) * (0.0 + 10.7) / 20.0), // 7.5
-			exp(log(10.0) * (0.0 + 11.7) / 20.0), // 8.0
-			exp(log(10.0) * (0.0 + 13.1) / 20.0), // 8.5  <- EQ4M max
-			exp(log(10.0) * (0.0 + 14.6) / 20.0), // 9.0
-			exp(log(10.0) * (0.0 + 16.3) / 20.0), // 9.5
-			exp(log(10.0) * (0.0 + 16.4) / 20.0)  // 10.
+			exp(log(10.0) * (0.3 - 16.0) / 20.0), //  0.0
+			exp(log(10.0) * (0.3 - 15.8) / 20.0), //  0.5
+			exp(log(10.0) * (0.3 - 15.6) / 20.0), //  1.0
+			exp(log(10.0) * (0.3 - 15.0) / 20.0), //  1.5
+			exp(log(10.0) * (0.3 - 14.5) / 20.0), //  2.0
+			exp(log(10.0) * (0.3 - 13.0) / 20.0), //  2.5
+			exp(log(10.0) * (0.3 - 11.8) / 20.0), //  3.0
+			exp(log(10.0) * (0.3 - 9.4) / 20.0), //  3.5
+			exp(log(10.0) * (0.3 - 5.9) / 20.0), //  4.0
+			exp(log(10.0) * (0.3 - 3.1) / 20.0), //  4.5
+			exp(log(10.0) * (0.3 - 1.5) / 20.0), // 5.0
+			exp(log(10.0) * (0.3 - 0.3) / 20.0), // 5.5
+			exp(log(10.0) * (0.3 + 1.2) / 20.0), // 6.0
+			exp(log(10.0) * (0.3 + 2.8) / 20.0), // 6.5
+			exp(log(10.0) * (0.3 + 5.2) / 20.0), // 7.0
+			exp(log(10.0) * (0.3 + 10.7) / 20.0), // 7.5
+			exp(log(10.0) * (0.3 + 11.7) / 20.0), // 8.0
+			exp(log(10.0) * (0.3 + 13.1) / 20.0), // 8.5  <- EQ4M max
+			exp(log(10.0) * (0.3 + 14.6) / 20.0), // 9.0
+			exp(log(10.0) * (0.3 + 16.3) / 20.0), // 9.5
+			exp(log(10.0) * (0.3 + 16.4) / 20.0)  // 10.
 		};
+		const double dAir_f[7] = { 0.0, 1900, 3810, 7500, 10700, 15700, 31000 };
 
 		// Buffers ------------------------------------------------------------------
 		typedef struct _Flt {
@@ -246,18 +261,26 @@ namespace yg331 {
 		} Flt;
 
 		Flt dnSample_21[2];
+		Flt upSample_21[2];
 		Flt dnSample_42[2];
+		Flt upSample_41[2];
 
 		const Steinberg::int32 dnTap_21 = 49;
+		const Steinberg::int32 upTap_21 = 49;
 		const Steinberg::int32 dnTap_42 = 193;
+		const Steinberg::int32 upTap_41 = 193;
 
 		void Fir_x2_dn(Steinberg::Vst::Sample64* in, Steinberg::Vst::Sample64* out, Steinberg::int32 channel);
+		void Fir_x2_up(Steinberg::Vst::Sample64* in, Steinberg::Vst::Sample64* out, Steinberg::int32 channel);
 		void Fir_x4_dn(Steinberg::Vst::Sample64* in, Steinberg::Vst::Sample64* out, Steinberg::int32 channel);
+		void Fir_x4_up(Steinberg::Vst::Sample64* in, Steinberg::Vst::Sample64* out, Steinberg::int32 channel);
 
 		const Steinberg::int32 latency_Fir_x2 = 12;
 		const Steinberg::int32 latency_Fir_x4 = 24;
+		const Steinberg::int32 tapHalf = (dnTap_21 - 1) / 2;
 
 		std::queue<double> latency_q[2];
+		std::deque<double> latency_q_x2[2];
 	};
 	//------------------------------------------------------------------------
 } // namespace yg331

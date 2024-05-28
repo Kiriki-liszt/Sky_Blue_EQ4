@@ -5,16 +5,16 @@
 
 
 SBEQ4_editor.uidesc         DATA "SBEQ4_editor.uidesc"
-SBEQ4_background.png			PNG "SBEQ4_background.png"
-SBEQ4_knob_black.png		PNG "SBEQ4_knob_black.png"
-SBEQ4_knob_air.png  		PNG "SBEQ4_knob_air.png"
-SBEQ4_knob_blue.png		PNG "SBEQ4_knob_blue.png"
-SBEQ4_knob_green.png		PNG "SBEQ4_knob_green.png"
-SBEQ4_knob_magenta.png 	PNG "SBEQ4_knob_magenta.png"
-SBEQ4_knob_orange.png		PNG "SBEQ4_knob_orange.png"
-SBEQ4_knob_white.png		PNG "SBEQ4_knob_white.png"
-SBEQ4_knob_yellow.png		PNG "SBEQ4_knob_yellow.png"
-SBEQ4_bypass.png		PNG "SBEQ4_bypass.png"
+SBEQ4_background.png		PNG  "SBEQ4_background.png"
+SBEQ4_knob_black.png		PNG  "SBEQ4_knob_black.png"
+SBEQ4_knob_air.png  		PNG  "SBEQ4_knob_air.png"
+SBEQ4_knob_blue.png		    PNG  "SBEQ4_knob_blue.png"
+SBEQ4_knob_green.png		PNG  "SBEQ4_knob_green.png"
+SBEQ4_knob_magenta.png 	    PNG  "SBEQ4_knob_magenta.png"
+SBEQ4_knob_orange.png		PNG  "SBEQ4_knob_orange.png"
+SBEQ4_knob_white.png		PNG  "SBEQ4_knob_white.png"
+SBEQ4_knob_yellow.png		PNG  "SBEQ4_knob_yellow.png"
+SBEQ4_bypass.png		    PNG  "SBEQ4_bypass.png"
 
 
 

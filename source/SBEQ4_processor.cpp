@@ -277,21 +277,18 @@ namespace yg331 {
 			OS_target = newSetup.sampleRate;
 		}
 
-		const Vst::ParamValue Fc_sub = 10.0;
-		const Vst::ParamValue Fc_40  = 39.0;
-		const Vst::ParamValue Fc_160 = 155.0;
-		const Vst::ParamValue Fc_650 = 625.0;
-		const Vst::ParamValue Fc_2k5 = 12.5;
+		const Vst::ParamValue Fc_sub = 8.5;
+		const Vst::ParamValue Fc_40  = 38.0;
+		const Vst::ParamValue Fc_160 = 156.7;
+		const Vst::ParamValue Fc_650 = 628.0;
+		const Vst::ParamValue Fc_2k5 = 1238.0;
 
 		for (int channel = 0; channel < 2; channel++) {
-			setSVF(&svf_Sub[channel], kBP, 0.465, 1.0, Fc_sub, OS_target);
-			setSVF(&svf_40[channel], kBP, 0.465, 1.0, Fc_40, OS_target);
-			setSVF(&svf_160[channel], kBP, 0.465, 1.0, Fc_160, OS_target);
-			setSVF(&svf_650[channel], kBP, 0.45, 1.0, Fc_650, OS_target);
-			setSVF(&svf_2k5[channel], kHP, 0.01, 1.0, Fc_2k5, OS_target);
-			//setSVF(&svf_Sky[channel], kHP, 0.01, 1.0, Fc_air, OS_target);
-			//setSVF(&svf_LC[channel], kHP, 0.72, 1.0, 0.3, OS_target);
-			//setSVF(&svf_HC[channel], kLP, 0.1, 1.0, 72000, OS_target);
+			setSVF(&svf_Sub[channel], kBP, 0.456 , 0.0, Fc_sub, OS_target);
+			setSVF(&svf_40[channel] , kBP, 0.456, 0.0, Fc_40 , OS_target);
+			setSVF(&svf_160[channel], kBP, 0.456, 0.0, Fc_160, OS_target);
+			setSVF(&svf_650[channel], kBP, 0.456, 0.0, Fc_650, OS_target);
+			setSVF(&svf_2k5[channel], k6HP, 0.0, Fc_2k5, OS_target);
 		}
 
 		//--- called before any processing ----
@@ -384,6 +381,52 @@ namespace yg331 {
 
 	// User made --------
 
+	inline void Sky_Blue_EQ4Processor::setSVF
+	(SVF_* svf_filter, filter_type_6dB kFilter, Vst::ParamValue gain, Vst::Sample64 Fc, Vst::Sample64 Fs)
+	{
+		svf_filter->bellgaindB = gain;
+		svf_filter->A = pow(10.0, svf_filter->bellgaindB / 40.0);
+
+		svf_filter->w = Fc * M_PI / Fs; // f follows DMG type, not ProQ type
+		svf_filter->g0 = tan(svf_filter->w);
+		svf_filter->k0 = 1 / svf_filter->Q;
+
+		svf_filter->g = svf_filter->g0;
+		svf_filter->k = svf_filter->k0;
+
+		double gdA = svf_filter->g0 / svf_filter->A;
+		double gmA = svf_filter->g0 * svf_filter->A;
+		double AmA = svf_filter->A * svf_filter->A;
+
+		switch (kFilter)
+		{
+		case k6LP:   svf_filter->m0 = 0; svf_filter->m1 = 0; svf_filter->m2 = 1; break;
+		case k6HP:   svf_filter->m0 = 1; svf_filter->m1 = 0; svf_filter->m2 = 0; break;
+		case k6LS:   svf_filter->m0 = 1; svf_filter->m1 = 0; svf_filter->m2 = AmA;
+			svf_filter->g = gdA; break;
+		case k6HS:   svf_filter->m0 = AmA; svf_filter->m1 = 0; svf_filter->m2 = 1;
+			svf_filter->g = gmA; break;
+		default:
+			break;
+		}
+		svf_filter->gt0 = 1 / (1 + svf_filter->g); 
+		svf_filter->gt1 = svf_filter->g * svf_filter->gt0;
+	}
+
+	inline Vst::Sample64 Sky_Blue_EQ4Processor::computeSVF_6
+	(SVF_* svf_filter, Vst::Sample64 input)
+	{
+		svf_filter->vin = input;
+		svf_filter->v1 = svf_filter->vin;
+		svf_filter->v2 = svf_filter->gt1 * svf_filter->v1 + svf_filter->gt0 * svf_filter->ic1eq;
+		svf_filter->v0 = svf_filter->gt0 * svf_filter->v1 - svf_filter->gt0 * svf_filter->ic2eq;
+
+		svf_filter->ic1eq += 2.0 * svf_filter->g * (svf_filter->v1 - svf_filter->v2);
+		svf_filter->ic2eq += 2.0 * svf_filter->g * svf_filter->v0;
+
+		return svf_filter->m0 * svf_filter->v0 + /* m1 * v1 + */ svf_filter->m2 * svf_filter->v2;
+	}
+
 
 	inline void Sky_Blue_EQ4Processor::setSVF
 	(SVF_* svf_filter, filter_type kFilter, Vst::ParamValue q, Vst::ParamValue gain, Vst::Sample64 Fc, Vst::Sample64 Fs)
@@ -400,60 +443,31 @@ namespace yg331 {
 		svf_filter->g = svf_filter->g0;
 		svf_filter->k = svf_filter->k0;
 
+		double kdA = svf_filter->k0 / svf_filter->A;
+		double kmA = svf_filter->k0 * svf_filter->A;
+		double gdSA = svf_filter->g0 / sqrt(svf_filter->A);
+		double gmSA = svf_filter->g0 * sqrt(svf_filter->A);
+		double AmA = svf_filter->A * svf_filter->A;
+
 		switch (svf_filter->type)
 		{
-		case kLP:
-			svf_filter->m0 = 0;
-			svf_filter->m1 = 0;
-			svf_filter->m2 = 1;
-			break;
-		case kHP:
-			svf_filter->m0 = 1;
-			svf_filter->m1 = 0;
-			svf_filter->m2 = 0;
-			break;
-		case kBP:
-			svf_filter->m0 = 0;
-			svf_filter->m1 = 1;
-			svf_filter->m2 = 0;
-			break;
-		case kNotch:
-			svf_filter->m0 = 1;
-			svf_filter->m1 = 0;
-			svf_filter->m2 = 1;
-			break;
-		case kPeak:
-			svf_filter->m0 = 1;
-			svf_filter->m1 = 0;
-			svf_filter->m2 = -1;
-			break;
-		case kBell:
-			svf_filter->g = svf_filter->g0;
-			svf_filter->k = svf_filter->k0 / svf_filter->A;
-			svf_filter->m0 = 1;
-			svf_filter->m1 = svf_filter->k0 * svf_filter->A;
-			svf_filter->m2 = 1;
-			break;
-		case kLS:
-			svf_filter->g = svf_filter->g0 / sqrt(svf_filter->A);
-			svf_filter->k = svf_filter->k0;
-			svf_filter->m0 = 1;
-			svf_filter->m1 = svf_filter->k0 * svf_filter->A;
-			svf_filter->m2 = svf_filter->A * svf_filter->A;
-			break;
-		case kHS:
-			svf_filter->g = svf_filter->g0 * sqrt(svf_filter->A);
-			svf_filter->k = svf_filter->k0;
-			svf_filter->m0 = svf_filter->A * svf_filter->A;
-			svf_filter->m1 = svf_filter->k0 * svf_filter->A;
-			svf_filter->m2 = 1;
-			break;
+		case kLP:    svf_filter->m0 = 0; svf_filter->m1 = 0; svf_filter->m2 = 1; break;
+		case kHP:    svf_filter->m0 = 1; svf_filter->m1 = 0; svf_filter->m2 = 0; break;
+		case kBP:    svf_filter->m0 = 0; svf_filter->m1 = 1; svf_filter->m2 = 0; svf_filter->k = kdA; break; // Custom
+		case kNotch: svf_filter->m0 = 1; svf_filter->m1 = 0; svf_filter->m2 = 1; break;
+		case kPeak:  svf_filter->m0 = 1; svf_filter->m1 = 0; svf_filter->m2 = -1; break;
+		case kBell:  svf_filter->m0 = 1; svf_filter->m1 = kmA; svf_filter->m2 = 1;
+			svf_filter->k = kdA; break; //svf_filter->g = svf_filter->g0;
+		case kLS:    svf_filter->m0 = 1; svf_filter->m1 = kmA; svf_filter->m2 = AmA;
+			svf_filter->g = gdSA; break; //svf_filter->k = svf_filter->k0;
+		case kHS:    svf_filter->m0 = AmA; svf_filter->m1 = kmA; svf_filter->m2 = 1;
+			svf_filter->g = gmSA; break; //svf_filter->k = svf_filter->k0;
 		default:
 			break;
 		}
 		svf_filter->g_k = svf_filter->g + svf_filter->k;
-		svf_filter->gt0 = 1 / (1 + svf_filter->g * svf_filter->g_k);
-		svf_filter->gk0 = svf_filter->g_k * svf_filter->gt0;
+		svf_filter->gt0 = 1 / (1 + svf_filter->g * svf_filter->g_k); 
+		svf_filter->gk0 = svf_filter->g_k * svf_filter->gt0; 
 		svf_filter->gt1 = svf_filter->g * svf_filter->gt0;
 		svf_filter->gk1 = svf_filter->g * svf_filter->gk0;
 		svf_filter->gt2 = svf_filter->g * svf_filter->gt1;
@@ -475,33 +489,6 @@ namespace yg331 {
 		return svf_filter->m0 * svf_filter->v0 + svf_filter->m1 * svf_filter->v1 + svf_filter->m2 * svf_filter->v2;
 	}
 
-	inline void Sky_Blue_EQ4Processor::coefSVF
-	(Vst::SampleRate Fs)
-	{
-		int32 iParamAirF = FromNormalized<Vst::ParamValue>(fParamSkyFreq, 6);
-		double dAir_f[7] = { 0.0, 19.5, 39.0, 78.0, 110.0, 165.0, 350.0 };
-
-		//double Fc_sub = 10.0;
-		//double Fc_40 = 39.0;
-		//double Fc_160 = 155.0;
-		//double Fc_650 = 625.0;
-		//double Fc_2k5 = 12.5;
-		double Fc_air = dAir_f[iParamAirF];
-
-		for (int channel = 0; channel < 2; channel++) {
-			//setSVF(&svf_Sub[channel], kBP, 0.465, 1.0, Fc_sub, Fs);
-			//setSVF(&svf_40[channel], kBP, 0.465, 1.0, Fc_40, Fs);
-			//setSVF(&svf_160[channel], kBP, 0.465, 1.0, Fc_160, Fs);
-			//setSVF(&svf_650[channel], kBP, 0.45, 1.0, Fc_650, Fs);
-			//setSVF(&svf_2k5[channel], kHP, 0.01, 1.0, Fc_2k5, Fs);
-			setSVF(&svf_Sky[channel], kHP, 0.01, 1.0, Fc_air, Fs);
-			//setSVF(&svf_LC[channel], kHP, 0.72, 1.0, 0.3, Fs);
-			//setSVF(&svf_HC[channel], kLP, 0.1, 1.0, 72000, Fs);
-		}
-		return;
-	}
-
-
 	template <typename SampleType>
 	void Sky_Blue_EQ4Processor::processSVF(
 		SampleType**     inputs, 
@@ -511,28 +498,12 @@ namespace yg331 {
 		Steinberg::int32 sampleFrames)
 	{
 
-		Vst::Sample64 _db = (12.0 * fParamInputAtten - 12.0) - (3.0);
-
+		Vst::Sample64 _db = (12.0 * fParamInputAtten - 12.0) + (-3.5);
 		Vst::Sample64 In_Atten = exp(log(10.0) * _db / 20.0);
 
-		if (fParamOS == overSample_2x) coefSVF(getSampleRate * 2.0);
-		else if (fParamOS == overSample_4x) coefSVF(getSampleRate * 4.0);
-		else coefSVF(getSampleRate);
-
-		int32 nParam_Sub = FromNormalized<Vst::ParamValue>(fParamSub, knob_stepCount);
-		int32 nParam_40  = FromNormalized<Vst::ParamValue>(fParam40,  knob_stepCount);
-		int32 nParam_160 = FromNormalized<Vst::ParamValue>(fParam160, knob_stepCount);
-		int32 nParam_650 = FromNormalized<Vst::ParamValue>(fParam650, knob_stepCount);
-		int32 nParam_2k5 = FromNormalized<Vst::ParamValue>(fParam2k5, knob_stepCount);
-		int32 nParam_Sky = FromNormalized<Vst::ParamValue>(fParamSky, knob_stepCount);
-
-		BP_gain_Sub = BP_arr[nParam_Sub];
-		BP_gain_40  = BP_arr[nParam_40];
-		BP_gain_160 = BP_arr[nParam_160];
-		BP_gain_650 = BP_arr[nParam_650];
-		HP_gain_2k5 = HP_arr[nParam_2k5];
-		HP_gain_Sky = HP_Sky_arr[nParam_Sky];
-		if (fParamSkyFreq == 0.0) HP_gain_Sky = 0.0;
+		Vst::SampleRate currFs = getSampleRate;
+		if (fParamOS == overSample_2x) currFs = getSampleRate * 2.0;
+		else if (fParamOS == overSample_4x) currFs = getSampleRate * 4.0;
 
 		int32 oversampling = 1;
 		if (fParamOS == overSample_2x) oversampling = 2;
@@ -542,23 +513,42 @@ namespace yg331 {
 		if (fParamOS == overSample_2x) latency = latency_Fir_x2;
 		else if (fParamOS == overSample_4x) latency = latency_Fir_x4;
 
+		int32 nParam_Sub = FromNormalized<Vst::ParamValue>(fParamSub, knob_stepCount);
+		int32 nParam_40  = FromNormalized<Vst::ParamValue>(fParam40,  knob_stepCount);
+		int32 nParam_160 = FromNormalized<Vst::ParamValue>(fParam160, knob_stepCount);
+		int32 nParam_650 = FromNormalized<Vst::ParamValue>(fParam650, knob_stepCount);
+		int32 nParam_2k5 = FromNormalized<Vst::ParamValue>(fParam2k5, knob_stepCount);
+		int32 nParam_Sky = FromNormalized<Vst::ParamValue>(fParamSky, knob_stepCount);
+		int32 iParamAirF = FromNormalized<Vst::ParamValue>(fParamSkyFreq, 6);
+
+		BP_gain_Sub = svf_Sub[0].k0 * pow(10.0, (BP_arr[nParam_Sub] + 1.34) / 20.0);
+		BP_gain_40  = svf_40 [0].k0 * pow(10.0, (BP_arr[nParam_40 ] + 0.09) / 20.0);
+		BP_gain_160 = svf_160[0].k0 * pow(10.0, (BP_arr[nParam_160] - 0.05) / 20.0);
+		BP_gain_650 = svf_650[0].k0 * pow(10.0, (BP_arr[nParam_650] - 0.57) / 20.0);
+		HP_gain_2k5 = pow(10.0, (BP_arr[nParam_2k5] + 3.65) / 20.0);
+		HP_gain_Sky = HP_Sky_arr[nParam_Sky];
+		if (fParamSkyFreq == 0.0) HP_gain_Sky = 0.0;
+
+		for (int channel = 0; channel < 2; channel++) {
+			setSVF(&svf_Sky[channel], k6HP, 0.0, dAir_f[iParamAirF], currFs);
+		}
+
 		for (int32 channel = 0; channel < numChannels; channel++)
 		{
 			int32 samples = sampleFrames;
 
-			SampleType* ptrIn  = (SampleType*)inputs[channel];
+			SampleType* ptrIn = (SampleType*)inputs[channel];
 			SampleType* ptrOut = (SampleType*)outputs[channel];
 
 			if (latency != latency_q[channel].size()) {
 				int32 diff = latency - (int32)latency_q[channel].size();
-				if   (diff > 0) for (int i = 0; i <  diff; i++) latency_q[channel].push(0.0);
-				else            for (int i = 0; i < -diff; i++) latency_q[channel].pop();
+				if (diff > 0) for (int i = 0; i <  diff; i++) latency_q[channel].push(0.0);
+				else          for (int i = 0; i < -diff; i++) latency_q[channel].pop();
 			}
 
 			while (--samples >= 0)
 			{
-				Vst::Sample64 inputSample = *ptrIn;
-				ptrIn++;
+				Vst::Sample64 inputSample = *ptrIn; ptrIn++;
 				Vst::Sample64 drySample = inputSample;
 				inputSample *= In_Atten;
 
@@ -570,95 +560,52 @@ namespace yg331 {
 				// Process
 				for (int i = 0; i < oversampling; i++)
 				{
-					Vst::Sample64 overSampled = up_x[i];
+					Vst::Sample64 overSampled = up_x[i];		
 
-					//inputSample = computeSVF(&svf_LC[channel], overSampled);
+#define SVF_Serial_BP(flt, in) \
+	flt.t0 = in - flt.ic2eq;\
+	flt.v0 = flt.gt0 * flt.t0 - flt.gk0 * flt.ic1eq;\
+	flt.t1 = flt.g * flt.v0;\
+	flt.v1 = flt.ic1eq + flt.t1;\
+	flt.t2 = flt.g * flt.v1;\
+	flt.ic1eq += 2.0 * flt.t1;\
+	flt.ic2eq += 2.0 * flt.t2;
 
-					svf_Sub[channel].vin = overSampled;
-					svf_Sub[channel].t0 = svf_Sub[channel].vin - svf_Sub[channel].ic2eq;
-					svf_Sub[channel].v0 = svf_Sub[channel].gt0 * svf_Sub[channel].t0 - svf_Sub[channel].gk0 * svf_Sub[channel].ic1eq;
-					svf_Sub[channel].t1 = svf_Sub[channel].gt1 * svf_Sub[channel].t0 - svf_Sub[channel].gk1 * svf_Sub[channel].ic1eq;
-					svf_Sub[channel].t2 = svf_Sub[channel].gt2 * svf_Sub[channel].t0 + svf_Sub[channel].gt1 * svf_Sub[channel].ic1eq;
-					svf_Sub[channel].v1 = svf_Sub[channel].t1 + svf_Sub[channel].ic1eq;
-					svf_Sub[channel].v2 = svf_Sub[channel].t2 + svf_Sub[channel].ic2eq;
-					svf_Sub[channel].ic1eq += 2.0 * svf_Sub[channel].t1;
-					svf_Sub[channel].ic2eq += 2.0 * svf_Sub[channel].t2;
-					Vst::Sample64 tmp_sub = svf_Sub[channel].m0 * svf_Sub[channel].v0 
-					                      + svf_Sub[channel].m1 * svf_Sub[channel].v1 
-					                      + svf_Sub[channel].m2 * svf_Sub[channel].v2;
+#define SVF_Parallel_BP(flt, in) \
+	flt.t0 = in - flt.ic2eq;\
+	flt.t1 = flt.gt1 * flt.t0 - flt.gk1 * flt.ic1eq;\
+	flt.t2 = flt.gt2 * flt.t0 + flt.gt1 * flt.ic1eq;\
+	flt.v1 = flt.ic1eq + flt.t1;\
+	flt.ic1eq += 2.0 * flt.t1;\
+	flt.ic2eq += 2.0 * flt.t2;
 
-					svf_40[channel].vin = overSampled;
-					svf_40[channel].t0 = svf_40[channel].vin - svf_40[channel].ic2eq;
-					svf_40[channel].v0 = svf_40[channel].gt0 * svf_40[channel].t0 - svf_40[channel].gk0 * svf_40[channel].ic1eq;
-					svf_40[channel].t1 = svf_40[channel].gt1 * svf_40[channel].t0 - svf_40[channel].gk1 * svf_40[channel].ic1eq;
-					svf_40[channel].t2 = svf_40[channel].gt2 * svf_40[channel].t0 + svf_40[channel].gt1 * svf_40[channel].ic1eq;
-					svf_40[channel].v1 = svf_40[channel].t1 + svf_40[channel].ic1eq;
-					svf_40[channel].v2 = svf_40[channel].t2 + svf_40[channel].ic2eq;
-					svf_40[channel].ic1eq += 2.0 * svf_40[channel].t1;
-					svf_40[channel].ic2eq += 2.0 * svf_40[channel].t2;
-					Vst::Sample64 tmp_40 = svf_40[channel].m0 * svf_40[channel].v0 
-					                     + svf_40[channel].m1 * svf_40[channel].v1 
-					                     + svf_40[channel].m2 * svf_40[channel].v2;
+					SVF_Serial_BP(svf_Sub[channel], overSampled)
+					//Vst::Sample64 tmp_sub = svf_Sub[channel].v1;
 
-					svf_160[channel].vin = overSampled;
-					svf_160[channel].t0 = svf_160[channel].vin - svf_160[channel].ic2eq;
-					svf_160[channel].v0 = svf_160[channel].gt0 * svf_160[channel].t0 - svf_160[channel].gk0 * svf_160[channel].ic1eq;
-					svf_160[channel].t1 = svf_160[channel].gt1 * svf_160[channel].t0 - svf_160[channel].gk1 * svf_160[channel].ic1eq;
-					svf_160[channel].t2 = svf_160[channel].gt2 * svf_160[channel].t0 + svf_160[channel].gt1 * svf_160[channel].ic1eq;
-					svf_160[channel].v1 = svf_160[channel].t1 + svf_160[channel].ic1eq;
-					svf_160[channel].v2 = svf_160[channel].t2 + svf_160[channel].ic2eq;
-					svf_160[channel].ic1eq += 2.0 * svf_160[channel].t1;
-					svf_160[channel].ic2eq += 2.0 * svf_160[channel].t2;
-					Vst::Sample64 tmp_160 = svf_160[channel].m0 * svf_160[channel].v0 
-					                      + svf_160[channel].m1 * svf_160[channel].v1 
-					                      + svf_160[channel].m2 * svf_160[channel].v2;
+					SVF_Serial_BP(svf_40[channel], overSampled)
+					//Vst::Sample64 tmp_40 = svf_40[channel].v1;
 
-					svf_650[channel].vin = overSampled;
-					svf_650[channel].t0 = svf_650[channel].vin - svf_650[channel].ic2eq;
-					svf_650[channel].v0 = svf_650[channel].gt0 * svf_650[channel].t0 - svf_650[channel].gk0 * svf_650[channel].ic1eq;
-					svf_650[channel].t1 = svf_650[channel].gt1 * svf_650[channel].t0 - svf_650[channel].gk1 * svf_650[channel].ic1eq;
-					svf_650[channel].t2 = svf_650[channel].gt2 * svf_650[channel].t0 + svf_650[channel].gt1 * svf_650[channel].ic1eq;
-					svf_650[channel].v1 = svf_650[channel].t1 + svf_650[channel].ic1eq;
-					svf_650[channel].v2 = svf_650[channel].t2 + svf_650[channel].ic2eq;
-					svf_650[channel].ic1eq += 2.0 * svf_650[channel].t1;
-					svf_650[channel].ic2eq += 2.0 * svf_650[channel].t2;
-					Vst::Sample64 tmp_650 = svf_650[channel].m0 * svf_650[channel].v0 
-					                      + svf_650[channel].m1 * svf_650[channel].v1 
-					                      + svf_650[channel].m2 * svf_650[channel].v2;
+					SVF_Serial_BP(svf_160[channel], overSampled)
+					//Vst::Sample64 tmp_160 = svf_160[channel].v1;
 
-					svf_2k5[channel].vin = overSampled;
-					svf_2k5[channel].t0 = svf_2k5[channel].vin - svf_2k5[channel].ic2eq;
-					svf_2k5[channel].v0 = svf_2k5[channel].gt0 * svf_2k5[channel].t0 - svf_2k5[channel].gk0 * svf_2k5[channel].ic1eq;
-					svf_2k5[channel].t1 = svf_2k5[channel].gt1 * svf_2k5[channel].t0 - svf_2k5[channel].gk1 * svf_2k5[channel].ic1eq;
-					svf_2k5[channel].t2 = svf_2k5[channel].gt2 * svf_2k5[channel].t0 + svf_2k5[channel].gt1 * svf_2k5[channel].ic1eq;
-					svf_2k5[channel].v1 = svf_2k5[channel].t1 + svf_2k5[channel].ic1eq;
-					svf_2k5[channel].v2 = svf_2k5[channel].t2 + svf_2k5[channel].ic2eq;
-					svf_2k5[channel].ic1eq += 2.0 * svf_2k5[channel].t1;
-					svf_2k5[channel].ic2eq += 2.0 * svf_2k5[channel].t2;
-					Vst::Sample64 tmp_2k5 = svf_2k5[channel].m0 * svf_2k5[channel].v0 
-					                      + svf_2k5[channel].m1 * svf_2k5[channel].v1 
-					                      + svf_2k5[channel].m2 * svf_2k5[channel].v2;
+					SVF_Serial_BP(svf_650[channel], overSampled)
+					//Vst::Sample64 tmp_650 = svf_650[channel].v1;
 
-					svf_Sky[channel].vin = overSampled;
-					svf_Sky[channel].t0 = svf_Sky[channel].vin - svf_Sky[channel].ic2eq;
-					svf_Sky[channel].v0 = svf_Sky[channel].gt0 * svf_Sky[channel].t0 - svf_Sky[channel].gk0 * svf_Sky[channel].ic1eq;
-					svf_Sky[channel].t1 = svf_Sky[channel].gt1 * svf_Sky[channel].t0 - svf_Sky[channel].gk1 * svf_Sky[channel].ic1eq;
-					svf_Sky[channel].t2 = svf_Sky[channel].gt2 * svf_Sky[channel].t0 + svf_Sky[channel].gt1 * svf_Sky[channel].ic1eq;
-					svf_Sky[channel].v1 = svf_Sky[channel].t1 + svf_Sky[channel].ic1eq;
-					svf_Sky[channel].v2 = svf_Sky[channel].t2 + svf_Sky[channel].ic2eq;
-					svf_Sky[channel].ic1eq += 2.0 * svf_Sky[channel].t1;
-					svf_Sky[channel].ic2eq += 2.0 * svf_Sky[channel].t2;
-					Vst::Sample64 tmp_sky = svf_Sky[channel].m0 * svf_Sky[channel].v0 
-					                      + svf_Sky[channel].m1 * svf_Sky[channel].v1 
-					                      + svf_Sky[channel].m2 * svf_Sky[channel].v2;
+					svf_2k5[channel].v0 = svf_2k5[channel].gt0 * overSampled - svf_2k5[channel].gt0 * svf_2k5[channel].ic2eq;
+					svf_2k5[channel].ic2eq += 2.0 * svf_2k5[channel].g * svf_2k5[channel].v0;
+					//Vst::Sample64 tmp_2k5 = svf_2k5[channel].v0;
+
+					svf_Sky[channel].v0 = svf_Sky[channel].gt0 * overSampled - svf_Sky[channel].gt0 * svf_Sky[channel].ic2eq;
+					svf_Sky[channel].ic2eq += 2.0 * svf_Sky[channel].g * svf_Sky[channel].v0;
+					//Vst::Sample64 tmp_sky = svf_Sky[channel].v0;
 
 					Vst::Sample64 dataOut = 0.0;
-					dataOut += tmp_sub * BP_gain_Sub;
-					dataOut += tmp_40  * BP_gain_40;
-					dataOut += tmp_160 * BP_gain_160;
-					dataOut += tmp_650 * BP_gain_650;
-					dataOut += tmp_2k5 * HP_gain_2k5;
-					dataOut += tmp_sky * HP_gain_Sky;
+					dataOut += svf_Sub[channel].v1 * BP_gain_Sub;
+					dataOut += svf_40 [channel].v1 * BP_gain_40;
+					dataOut += svf_160[channel].v1 * BP_gain_160;
+					dataOut += svf_650[channel].v1 * BP_gain_650;
+					dataOut += svf_2k5[channel].v0 * HP_gain_2k5;
+					dataOut += svf_Sky[channel].v0 * HP_gain_Sky;
 
 					up_y[i] = dataOut; // * gain;
 				}
@@ -690,7 +637,6 @@ namespace yg331 {
 		}
 		return;
 	}
-
 
 	void Sky_Blue_EQ4Processor::Fir_x2_dn(
 		Vst::Sample64* in, 
@@ -744,3 +690,41 @@ namespace yg331 {
 
 	//------------------------------------------------------------------------
 } // namespace yg331
+
+
+/*
+Vst::Sample64 dataOut = computeSVF_6(&svf_Sky[channel], overSampled);
+double gain = pow(10.0, 9.0 / 20.0) - 1.0; //A*A
+
+Vst::Sample64 dataOutSub = BP_gain_Sub * computeSVF(&svf_Sub[channel], overSampled);
+Vst::Sample64 dataOut40  = BP_gain_40  * computeSVF(&svf_40 [channel], overSampled);
+Vst::Sample64 dataOut160 = BP_gain_160 * computeSVF(&svf_160[channel], overSampled);
+Vst::Sample64 dataOut650 = BP_gain_650 * computeSVF(&svf_650[channel], overSampled);
+Vst::Sample64 dataOut2k5 = HP_gain_2k5 * computeSVF_6(&svf_2k5[channel], overSampled);
+up_y[i] = dataOutSub
+	+ dataOut40
+	+ dataOut160
+	+ dataOut650
+	+ dataOut2k5;
+*/
+/*
+#define SVF_Serial(flt, in) \
+	flt.t0 = in - flt.ic2eq;\
+	flt.v0 = flt.gt0 * flt.t0 - flt.gk0 * flt.ic1eq;\
+	flt.t1 = flt.g * flt.v0;\
+	flt.v1 = flt.ic1eq + flt.t1;\
+	flt.t2 = flt.g * flt.v1;\
+	flt.v2 = flt.ic2eq + flt.t2;\
+	flt.ic1eq += 2.0 * flt.t1;\
+	flt.ic2eq += 2.0 * flt.t2;
+
+#define SVF_Parallel(flt, in) \
+	flt.t0 = in - flt.ic2eq;\
+	flt.v0 = flt.gt0 * flt.t0 - flt.gk0 * flt.ic1eq;\
+	flt.t1 = flt.gt1 * flt.t0 - flt.gk1 * flt.ic1eq;\
+	flt.t2 = flt.gt2 * flt.t0 + flt.gt1 * flt.ic1eq;\
+	flt.v1 = flt.ic1eq + flt.t1;\
+	flt.v2 = flt.ic2eq + flt.t2;\
+	flt.ic1eq += 2.0 * flt.t1;\
+	flt.ic2eq += 2.0 * flt.t2;
+					*/

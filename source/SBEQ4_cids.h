@@ -54,6 +54,13 @@ namespace yg331 {
 		kHS,
 		kLS
 	};
+	enum filter_type_6dB
+	{
+		k6LP,
+		k6HP,
+		k6HS,
+		k6LS
+	};
 	typedef struct SVF_st
 	{
 		double vin = 0.0;
